@@ -3064,6 +3064,14 @@ sctp_handle_cookie_echo(struct mbuf *m, int iphlen, int offset,
 			inp->reconfig_supported = (*inp_p)->reconfig_supported;
 			inp->nrsack_supported = (*inp_p)->nrsack_supported;
 			inp->pktdrop_supported = (*inp_p)->pktdrop_supported;
+			inp->plpmtud_enabled = (*inp_p)->plpmtud_enabled;
+			inp->plpmtud_ipv4_min_mtu = (*inp_p)->plpmtud_ipv4_min_mtu;
+			inp->plpmtud_ipv6_min_mtu = (*inp_p)->plpmtud_ipv6_min_mtu;
+			inp->plpmtud_search_algorithm = (*inp_p)->plpmtud_search_algorithm;
+			inp->plpmtud_use_ptb = (*inp_p)->plpmtud_use_ptb;
+			inp->plpmtud_max_probes = (*inp_p)->plpmtud_max_probes;
+			inp->plpmtud_min_probe_rtx_time = (*inp_p)->plpmtud_min_probe_rtx_time;
+			inp->plpmtud_raise_time = (*inp_p)->plpmtud_raise_time;
 			inp->partial_delivery_point = (*inp_p)->partial_delivery_point;
 			inp->sctp_context = (*inp_p)->sctp_context;
 			inp->local_strreset_support = (*inp_p)->local_strreset_support;
