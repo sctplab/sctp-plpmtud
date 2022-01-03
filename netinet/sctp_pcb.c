@@ -2796,6 +2796,14 @@ sctp_inpcb_alloc(struct socket *so, uint32_t vrf_id)
 	inp->reconfig_supported = (uint8_t)SCTP_BASE_SYSCTL(sctp_reconfig_enable);
 	inp->nrsack_supported = (uint8_t)SCTP_BASE_SYSCTL(sctp_nrsack_enable);
 	inp->pktdrop_supported = (uint8_t)SCTP_BASE_SYSCTL(sctp_pktdrop_enable);
+	inp->plpmtud_enabled = (uint8_t)SCTP_BASE_SYSCTL(sctp_plpmtud_enable);
+	inp->plpmtud_ipv4_min_mtu = (uint32_t)SCTP_BASE_SYSCTL(sctp_plpmtud_ipv4_min_mtu);
+	inp->plpmtud_ipv6_min_mtu = (uint32_t)SCTP_BASE_SYSCTL(sctp_plpmtud_ipv6_min_mtu);
+	inp->plpmtud_search_algorithm = (uint8_t)SCTP_BASE_SYSCTL(sctp_plpmtud_search_algorithm);
+	inp->plpmtud_use_ptb = (uint8_t)SCTP_BASE_SYSCTL(sctp_plpmtud_use_ptb);
+	inp->plpmtud_max_probes = (uint16_t)SCTP_BASE_SYSCTL(sctp_plpmtud_max_probes);
+	inp->plpmtud_min_probe_rtx_time = (uint32_t)SCTP_BASE_SYSCTL(sctp_plpmtud_min_probe_rtx_time);
+	inp->plpmtud_raise_time = (uint32_t)SCTP_BASE_SYSCTL(sctp_plpmtud_raise_time);
 	inp->idata_supported = 0;
 
 #if defined(__FreeBSD__) && !defined(__Userspace__)
@@ -4547,6 +4555,14 @@ sctp_add_remote_addr(struct sctp_tcb *stcb, struct sockaddr *newaddr,
 	} else {
 		net->dest_state &= ~SCTP_ADDR_NO_PMTUD;
 	}
+	net->plpmtud_enabled = stcb->asoc.plpmtud_enabled;
+	net->plpmtud_ipv4_min_mtu = stcb->asoc.plpmtud_ipv4_min_mtu;
+	net->plpmtud_ipv6_min_mtu = stcb->asoc.plpmtud_ipv6_min_mtu;
+	net->plpmtud_search_algorithm = stcb->asoc.plpmtud_search_algorithm;
+	net->plpmtud_use_ptb = stcb->asoc.plpmtud_use_ptb;
+	net->plpmtud_max_probes = stcb->asoc.plpmtud_max_probes;
+	net->plpmtud_min_probe_rtx_time = stcb->asoc.plpmtud_min_probe_rtx_time;
+	net->plpmtud_raise_time = stcb->asoc.plpmtud_raise_time;
 	net->heart_beat_delay = stcb->asoc.heart_beat_delay;
 	/* Init the timer structure */
 	SCTP_OS_TIMER_INIT(&net->rxt_timer.timer);

@@ -74,6 +74,14 @@ sctp_init_sysctls()
 	SCTP_BASE_SYSCTL(sctp_reconfig_enable) = SCTPCTL_RECONFIG_ENABLE_DEFAULT;
 	SCTP_BASE_SYSCTL(sctp_nrsack_enable) = SCTPCTL_NRSACK_ENABLE_DEFAULT;
 	SCTP_BASE_SYSCTL(sctp_pktdrop_enable) = SCTPCTL_PKTDROP_ENABLE_DEFAULT;
+	SCTP_BASE_SYSCTL(sctp_plpmtud_enable) = SCTPCTL_PLPMTUD_ENABLE_DEFAULT;
+	SCTP_BASE_SYSCTL(sctp_plpmtud_ipv4_min_mtu) = SCTPCTL_PLPMTUD_IPv4_MIN_MTU_DEFAULT;
+	SCTP_BASE_SYSCTL(sctp_plpmtud_ipv6_min_mtu) = SCTPCTL_PLPMTUD_IPv6_MIN_MTU_DEFAULT;
+	SCTP_BASE_SYSCTL(sctp_plpmtud_search_algorithm) = SCTPCTL_PLPMTUD_SEARCH_ALGORITHM_DEFAULT;
+	SCTP_BASE_SYSCTL(sctp_plpmtud_use_ptb) = SCTPCTL_PLPMTUD_USE_PTB_DEFAULT;
+	SCTP_BASE_SYSCTL(sctp_plpmtud_max_probes) = SCTPCTL_PLPMTUD_MAX_PROBES_DEFAULT;
+	SCTP_BASE_SYSCTL(sctp_plpmtud_min_probe_rtx_time) = SCTPCTL_PLPMTUD_MIN_PROBE_RTX_TIME_DEFAULT;
+	SCTP_BASE_SYSCTL(sctp_plpmtud_raise_time) = SCTPCTL_PLPMTUD_RAISE_TIME_DEFAULT;
 #if !(defined(__FreeBSD__) && !defined(__Userspace__))
 	SCTP_BASE_SYSCTL(sctp_no_csum_on_loopback) = SCTPCTL_LOOPBACK_NOCSUM_DEFAULT;
 #endif
@@ -1139,6 +1147,14 @@ SYSCTL_PROC(_net_inet_sctp, OID_AUTO, asconf_enable, CTLFLAG_VNET|CTLTYPE_UINT|C
 SCTP_UINT_SYSCTL(reconfig_enable, sctp_reconfig_enable, SCTPCTL_RECONFIG_ENABLE)
 SCTP_UINT_SYSCTL(nrsack_enable, sctp_nrsack_enable, SCTPCTL_NRSACK_ENABLE)
 SCTP_UINT_SYSCTL(pktdrop_enable, sctp_pktdrop_enable, SCTPCTL_PKTDROP_ENABLE)
+SCTP_UINT_SYSCTL(plpmtud_enable, sctp_plpmtud_enable, SCTPCTL_PLPMTUD_ENABLE)
+SCTP_UINT_SYSCTL(plpmtud_ipv4_min_mtu, sctp_plpmtud_ipv4_min_mtu, SCTPCTL_PLPMTUD_IPv4_MIN_MTU)
+SCTP_UINT_SYSCTL(plpmtud_ipv6_min_mtu, sctp_plpmtud_ipv6_min_mtu, SCTPCTL_PLPMTUD_IPv6_MIN_MTU)
+SCTP_UINT_SYSCTL(plpmtud_search_algorithm, sctp_plpmtud_search_algorithm, SCTPCTL_PLPMTUD_SEARCH_ALGORITHM)
+SCTP_UINT_SYSCTL(plpmtud_use_ptb, sctp_plpmtud_use_ptb, SCTPCTL_PLPMTUD_USE_PTB)
+SCTP_UINT_SYSCTL(plpmtud_max_probes, sctp_plpmtud_max_probes, SCTPCTL_PLPMTUD_MAX_PROBES)
+SCTP_UINT_SYSCTL(plpmtud_min_probe_rtx_time, sctp_plpmtud_min_probe_rtx_time, SCTPCTL_PLPMTUD_MIN_PROBE_RTX_TIME)
+SCTP_UINT_SYSCTL(plpmtud_raise_time, sctp_plpmtud_raise_time, SCTPCTL_PLPMTUD_RAISE_TIME)
 #if defined(__APPLE__) && !defined(__Userspace__)
 SCTP_UINT_SYSCTL(loopback_nocsum, sctp_no_csum_on_loopback, SCTPCTL_LOOPBACK_NOCSUM)
 #endif
@@ -1248,6 +1264,14 @@ sctp_sysctl_handle_int(SYSCTL_HANDLER_ARGS)
 		RANGECHK(SCTP_BASE_SYSCTL(sctp_reconfig_enable), SCTPCTL_RECONFIG_ENABLE_MIN, SCTPCTL_RECONFIG_ENABLE_MAX);
 		RANGECHK(SCTP_BASE_SYSCTL(sctp_nrsack_enable), SCTPCTL_NRSACK_ENABLE_MIN, SCTPCTL_NRSACK_ENABLE_MAX);
 		RANGECHK(SCTP_BASE_SYSCTL(sctp_pktdrop_enable), SCTPCTL_PKTDROP_ENABLE_MIN, SCTPCTL_PKTDROP_ENABLE_MAX);
+		RANGECHK(SCTP_BASE_SYSCTL(sctp_plpmtud_enable), SCTPCTL_PLPMTUD_ENABLE_MIN, SCTPCTL_PLPMTUD_ENABLE_MAX);
+		RANGECHK(SCTP_BASE_SYSCTL(sctp_plpmtud_ipv4_min_mtu), SCTPCTL_PLPMTUD_IPv4_MIN_MTU_MIN, SCTPCTL_PLPMTUD_IPv4_MIN_MTU_MAX);
+		RANGECHK(SCTP_BASE_SYSCTL(sctp_plpmtud_ipv6_min_mtu), SCTPCTL_PLPMTUD_IPv6_MIN_MTU_MIN, SCTPCTL_PLPMTUD_IPv6_MIN_MTU_MAX);
+		RANGECHK(SCTP_BASE_SYSCTL(sctp_plpmtud_search_algorithm), SCTPCTL_PLPMTUD_SEARCH_ALGORITHM_MIN, SCTPCTL_PLPMTUD_SEARCH_ALGORITHM_MAX);
+		RANGECHK(SCTP_BASE_SYSCTL(sctp_plpmtud_use_ptb), SCTPCTL_PLPMTUD_USE_PTB_MIN, SCTPCTL_PLPMTUD_USE_PTB_MAX);
+		RANGECHK(SCTP_BASE_SYSCTL(sctp_plpmtud_max_probes), SCTPCTL_PLPMTUD_MAX_PROBES_MIN, SCTPCTL_PLPMTUD_MAX_PROBES_MAX);
+		RANGECHK(SCTP_BASE_SYSCTL(sctp_plpmtud_min_probe_rtx_time), SCTPCTL_PLPMTUD_MIN_PROBE_RTX_TIME_MIN, SCTPCTL_PLPMTUD_MIN_PROBE_RTX_TIME_MAX);
+		RANGECHK(SCTP_BASE_SYSCTL(sctp_plpmtud_raise_time), SCTPCTL_PLPMTUD_RAISE_TIME_MIN, SCTPCTL_PLPMTUD_RAISE_TIME_MAX);
 		RANGECHK(SCTP_BASE_SYSCTL(sctp_no_csum_on_loopback), SCTPCTL_LOOPBACK_NOCSUM_MIN, SCTPCTL_LOOPBACK_NOCSUM_MAX);
 		RANGECHK(SCTP_BASE_SYSCTL(sctp_peer_chunk_oh), SCTPCTL_PEER_CHKOH_MIN, SCTPCTL_PEER_CHKOH_MAX);
 		RANGECHK(SCTP_BASE_SYSCTL(sctp_max_burst_default), SCTPCTL_MAXBURST_MIN, SCTPCTL_MAXBURST_MAX);
@@ -1356,6 +1380,38 @@ sysctl_setup_sctp(void)
 	sysctl_add_oid(&sysctl_oid_top, "pktdrop_enable", CTLTYPE_INT|CTLFLAG_RW,
 	    &SCTP_BASE_SYSCTL(sctp_pktdrop_enable), 0, sctp_sysctl_handle_int,
 	    SCTPCTL_PKTDROP_ENABLE_DESC);
+
+	sysctl_add_oid(&sysctl_oid_top, "plpmtud_enable", CTLTYPE_INT|CTLFLAG_RW,
+            &SCTP_BASE_SYSCTL(sctp_plpmtud_enable), 0, sctp_sysctl_handle_int,
+	    SCTPCTL_PLPMTUD_ENABLE_DESC);
+
+	sysctl_add_oid(&sysctl_oid_top, "plpmtud_ipv4_min_mtu", CTLTYPE_INT|CTLFLAG_RW,
+            &SCTP_BASE_SYSCTL(sctp_plpmtud_ipv4_min_mtu), 0, sctp_sysctl_handle_int,
+	    SCTPCTL_PLPMTUD_IPv4_MIN_MTU_DESC);
+
+	sysctl_add_oid(&sysctl_oid_top, "plpmtud_ipv6_min_mtu", CTLTYPE_INT|CTLFLAG_RW,
+            &SCTP_BASE_SYSCTL(sctp_plpmtud_ipv6_min_mtu), 0, sctp_sysctl_handle_int,
+	    SCTPCTL_PLPMTUD_IPv6_MIN_MTU_DESC);
+
+	sysctl_add_oid(&sysctl_oid_top, "plpmtud_search_algorithm", CTLTYPE_INT|CTLFLAG_RW,
+            &SCTP_BASE_SYSCTL(sctp_plpmtud_search_algorithm), 0, sctp_sysctl_handle_int,
+	    SCTPCTL_PLPMTUD_SEARCH_ALGORITHM_DESC);
+
+	sysctl_add_oid(&sysctl_oid_top, "plpmtud_use_ptb", CTLTYPE_INT|CTLFLAG_RW,
+            &SCTP_BASE_SYSCTL(sctp_plpmtud_use_ptb), 0, sctp_sysctl_handle_int,
+	    SCTPCTL_PLPMTUD_USE_PTB_DESC);
+
+	sysctl_add_oid(&sysctl_oid_top, "plpmtud_max_probes", CTLTYPE_INT|CTLFLAG_RW,
+            &SCTP_BASE_SYSCTL(sctp_plpmtud_max_probes), 0, sctp_sysctl_handle_int,
+	    SCTPCTL_PLPMTUD_MAX_PROBES_DESC);
+
+	sysctl_add_oid(&sysctl_oid_top, "plpmtud_min_probe_rtx_time", CTLTYPE_INT|CTLFLAG_RW,
+            &SCTP_BASE_SYSCTL(sctp_plpmtud_min_probe_rtx_time), 0, sctp_sysctl_handle_int,
+	    SCTPCTL_PLPMTUD_MIN_PROBE_RTX_TIME_DESC);
+
+	sysctl_add_oid(&sysctl_oid_top, "plpmtud_raise_time", CTLTYPE_INT|CTLFLAG_RW,
+            &SCTP_BASE_SYSCTL(sctp_plpmtud_raise_time), 0, sctp_sysctl_handle_int,
+	    SCTPCTL_PLPMTUD_RAISE_TIME_DESC);
 
 	sysctl_add_oid(&sysctl_oid_top, "loopback_nocsum", CTLTYPE_INT|CTLFLAG_RW,
 	    &SCTP_BASE_SYSCTL(sctp_no_csum_on_loopback), 0, sctp_sysctl_handle_int,

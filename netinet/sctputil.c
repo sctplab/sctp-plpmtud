@@ -1178,6 +1178,14 @@ sctp_init_asoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	asoc->nrsack_supported = inp->nrsack_supported;
 	asoc->pktdrop_supported = inp->pktdrop_supported;
 	asoc->idata_supported = inp->idata_supported;
+	asoc->plpmtud_enabled = inp->plpmtud_enabled;
+	asoc->plpmtud_ipv4_min_mtu = inp->plpmtud_ipv4_min_mtu;
+	asoc->plpmtud_ipv6_min_mtu = inp->plpmtud_ipv6_min_mtu;
+	asoc->plpmtud_search_algorithm = inp->plpmtud_search_algorithm;
+	asoc->plpmtud_use_ptb = inp->plpmtud_use_ptb;
+	asoc->plpmtud_min_probe_rtx_time = inp->plpmtud_min_probe_rtx_time;
+	asoc->plpmtud_max_probes = inp->plpmtud_max_probes;
+	asoc->plpmtud_raise_time = inp->plpmtud_raise_time;
 	asoc->sctp_cmt_pf = (uint8_t)0;
 	asoc->sctp_frag_point = inp->sctp_frag_point;
 	asoc->sctp_features = inp->sctp_features;

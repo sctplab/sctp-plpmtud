@@ -496,6 +496,14 @@ struct sctp_inpcb {
 	uint8_t reconfig_supported;
 	uint8_t nrsack_supported;
 	uint8_t pktdrop_supported;
+	uint8_t plpmtud_enabled;
+	uint32_t plpmtud_ipv4_min_mtu;
+	uint32_t plpmtud_ipv6_min_mtu;
+	uint8_t plpmtud_search_algorithm;
+	uint8_t plpmtud_use_ptb;
+	uint16_t plpmtud_max_probes;
+	uint32_t plpmtud_min_probe_rtx_time;
+	uint32_t plpmtud_raise_time;
 	struct sctp_nonpad_sndrcvinfo def_send;
 	/*-
 	 * These three are here for the sosend_dgram

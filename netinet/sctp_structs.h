@@ -430,6 +430,15 @@ struct sctp_nets {
 	uint32_t flowid;
 	uint8_t flowtype;
 #endif
+
+	uint8_t plpmtud_enabled;
+	uint32_t plpmtud_ipv4_min_mtu;
+	uint32_t plpmtud_ipv6_min_mtu;
+	uint8_t plpmtud_search_algorithm;
+	uint8_t plpmtud_use_ptb;
+	uint16_t plpmtud_max_probes;
+	uint32_t plpmtud_min_probe_rtx_time;
+	uint32_t plpmtud_raise_time;
 };
 
 struct sctp_data_chunkrec {
@@ -1233,6 +1242,15 @@ struct sctp_association {
 	uint8_t nrsack_supported;
 	uint8_t pktdrop_supported;
 	uint8_t idata_supported;
+
+	uint8_t plpmtud_enabled;
+	uint32_t plpmtud_ipv4_min_mtu;
+	uint32_t plpmtud_ipv6_min_mtu;
+	uint8_t plpmtud_search_algorithm;
+	uint8_t plpmtud_use_ptb;
+	uint16_t plpmtud_max_probes;
+	uint32_t plpmtud_min_probe_rtx_time;
+	uint32_t plpmtud_raise_time;
 
 	/* Did the peer make the stream config (add out) request */
 	uint8_t peer_req_out;
