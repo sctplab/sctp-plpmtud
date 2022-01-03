@@ -238,3 +238,5 @@ sctp_sosend(struct socket *so,
 #endif
 #endif
 
+void
+sctp_send_plpmtud_probe(struct sctp_tcb *, struct sctp_nets *, uint32_t, uint32_t);
