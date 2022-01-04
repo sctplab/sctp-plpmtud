@@ -282,7 +282,6 @@ sctp_notify(struct sctp_inpcb *inp,
 #if defined(__APPLE__) && !defined(__Userspace__)
 	struct socket *so;
 #endif
-	int timer_stopped;
 
 	if (icmp_type != ICMP_UNREACH) {
 		/* We only care about unreachable */
@@ -331,49 +330,8 @@ sctp_notify(struct sctp_inpcb *inp,
 #endif
 		/* no need to unlock here, since the TCB is gone */
 	} else if (icmp_code == ICMP_UNREACH_NEEDFRAG) {
-		if (net->dest_state & SCTP_ADDR_NO_PMTUD) {
-			SCTP_TCB_UNLOCK(stcb);
-			return;
-		}
-		/* Find the next (smaller) MTU */
-		if (next_mtu == 0) {
-			/*
-			 * Old type router that does not tell us what the next
-			 * MTU is.
-			 * Rats we will have to guess (in a educated fashion
-			 * of course).
-			 */
-			next_mtu = sctp_get_prev_mtu(ip_len);
-		}
-		/* Stop the PMTU timer. */
-		if (SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
-			timer_stopped = 1;
-			sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, inp, stcb, net,
-			                SCTP_FROM_SCTP_USRREQ + SCTP_LOC_1);
-		} else {
-			timer_stopped = 0;
-		}
-		/* Update the path MTU. */
-		if (net->port) {
-			next_mtu -= sizeof(struct udphdr);
-		}
-		if (net->mtu > next_mtu) {
-			net->mtu = next_mtu;
-#if defined(__FreeBSD__) && !defined(__Userspace__)
-			if (net->port) {
-				sctp_hc_set_mtu(&net->ro._l_addr, inp->fibnum, next_mtu + sizeof(struct udphdr));
-			} else {
-				sctp_hc_set_mtu(&net->ro._l_addr, inp->fibnum, next_mtu);
-			}
-#endif
-		}
-		/* Update the association MTU */
-		if (stcb->asoc.smallest_mtu > next_mtu) {
-			sctp_pathmtu_adjustment(stcb, next_mtu, true);
-		}
-		/* Finally, start the PMTU timer if it was running before. */
-		if (timer_stopped) {
-			sctp_timer_start(SCTP_TIMER_TYPE_PATHMTURAISE, inp, stcb, net);
+		if (net->plpmtud_enabled) {
+			sctp_plpmtud_on_ptb_received(&net->plpmtud, next_mtu);
 		}
 		SCTP_TCB_UNLOCK(stcb);
 	} else {
