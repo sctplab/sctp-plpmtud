@@ -939,79 +939,6 @@ sctp_stop_association_timers(struct sctp_tcb *stcb, bool stop_assoc_kill_timer)
 	}
 }
 
-/*
- * A list of sizes based on typical mtu's, used only if next hop size not
- * returned. These values MUST be multiples of 4 and MUST be ordered.
- */
-static uint32_t sctp_mtu_sizes[] = {
-	68,
-	296,
-	508,
-	512,
-	544,
-	576,
-	1004,
-	1492,
-	1500,
-	1536,
-	2000,
-	2048,
-	4352,
-	4464,
-	8168,
-	17912,
-	32000,
-	65532
-};
-
-/*
- * Return the largest MTU in sctp_mtu_sizes smaller than val.
- * If val is smaller than the minimum, just return the largest
- * multiple of 4 smaller or equal to val.
- * Ensure that the result is a multiple of 4.
- */
-uint32_t
-sctp_get_prev_mtu(uint32_t val)
-{
-	uint32_t i;
-
-	val &= 0xfffffffc;
-	if (val <= sctp_mtu_sizes[0]) {
-		return (val);
-	}
-	for (i = 1; i < (sizeof(sctp_mtu_sizes) / sizeof(uint32_t)); i++) {
-		if (val <= sctp_mtu_sizes[i]) {
-			break;
-		}
-	}
-	KASSERT((sctp_mtu_sizes[i - 1] & 0x00000003) == 0,
-	        ("sctp_mtu_sizes[%u] not a multiple of 4", i - 1));
-	return (sctp_mtu_sizes[i - 1]);
-}
-
-/*
- * Return the smallest MTU in sctp_mtu_sizes larger than val.
- * If val is larger than the maximum, just return the largest multiple of 4 smaller
- * or equal to val.
- * Ensure that the result is a multiple of 4.
- */
-uint32_t
-sctp_get_next_mtu(uint32_t val)
-{
-	/* select another MTU that is just bigger than this one */
-	uint32_t i;
-
-	val &= 0xfffffffc;
-	for (i = 0; i < (sizeof(sctp_mtu_sizes) / sizeof(uint32_t)); i++) {
-		if (val < sctp_mtu_sizes[i]) {
-			KASSERT((sctp_mtu_sizes[i] & 0x00000003) == 0,
-				("sctp_mtu_sizes[%u] not a multiple of 4", i));
-			return (sctp_mtu_sizes[i]);
-		}
-	}
-	return (val);
-}
-
 void
 sctp_fill_random_store(struct sctp_pcb *m)
 {
@@ -8720,6 +8647,7 @@ sctp_plpmtud_init(struct sctp_tcb *stcb, struct sctp_nets *net)
 	plpmtud->stcb = stcb;
 	plpmtud->net = net;
 	plpmtud->timer_value = 0;
+	plpmtud->probed_size = 0;
 
 	/* determine max_pmtu */
 	plpmtud->max_pmtu = (SCTP_PLPMTUD_MAX_IP_SIZE >> 2) << 2;

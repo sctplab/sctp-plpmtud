@@ -2965,7 +2965,6 @@ sctp_inpcb_alloc(struct socket *so, uint32_t vrf_id)
 	m->sctp_timeoutticks[SCTP_TIMER_INIT] = sctp_secs_to_ticks(SCTP_INIT_SEC);	/* needed ? */
 	m->sctp_timeoutticks[SCTP_TIMER_RECV] = sctp_msecs_to_ticks(SCTP_BASE_SYSCTL(sctp_delayed_sack_time_default));
 	m->sctp_timeoutticks[SCTP_TIMER_HEARTBEAT] = sctp_msecs_to_ticks(SCTP_BASE_SYSCTL(sctp_heartbeat_interval_default));
-	m->sctp_timeoutticks[SCTP_TIMER_PMTU] = sctp_secs_to_ticks(SCTP_BASE_SYSCTL(sctp_pmtu_raise_time_default));
 	m->sctp_timeoutticks[SCTP_TIMER_MAXSHUTDOWN] = sctp_secs_to_ticks(SCTP_BASE_SYSCTL(sctp_shutdown_guard_time_default));
 	m->sctp_timeoutticks[SCTP_TIMER_SIGNATURE] = sctp_secs_to_ticks(SCTP_BASE_SYSCTL(sctp_secret_lifetime_default));
 	/* all max/min max are in ms */
@@ -4550,11 +4549,7 @@ sctp_add_remote_addr(struct sctp_tcb *stcb, struct sockaddr *newaddr,
 	} else {
 		net->dest_state &= ~SCTP_ADDR_NOHB;
 	}
-	if (sctp_stcb_is_feature_on(stcb->sctp_ep, stcb, SCTP_PCB_FLAGS_DO_NOT_PMTUD)) {
-		net->dest_state |= SCTP_ADDR_NO_PMTUD;
-	} else {
-		net->dest_state &= ~SCTP_ADDR_NO_PMTUD;
-	}
+	net->dest_state |= SCTP_ADDR_NO_PMTUD;
 	net->plpmtud_enabled = stcb->asoc.plpmtud_enabled;
 	net->plpmtud_ipv4_min_mtu = stcb->asoc.plpmtud_ipv4_min_mtu;
 	net->plpmtud_ipv6_min_mtu = stcb->asoc.plpmtud_ipv6_min_mtu;
