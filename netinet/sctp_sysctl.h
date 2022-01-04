@@ -79,7 +79,6 @@ struct sctp_sysctl {
 	uint32_t sctp_system_free_resc_limit;
 	uint32_t sctp_asoc_free_resc_limit;
 	uint32_t sctp_heartbeat_interval_default;
-	uint32_t sctp_pmtu_raise_time_default;
 	uint32_t sctp_shutdown_guard_time_default;
 	uint32_t sctp_secret_lifetime_default;
 	uint32_t sctp_rto_max_default;
@@ -356,12 +355,6 @@ struct sctp_sysctl {
 #define SCTPCTL_HEARTBEAT_INTERVAL_MIN	0
 #define SCTPCTL_HEARTBEAT_INTERVAL_MAX	0xFFFFFFFF
 #define SCTPCTL_HEARTBEAT_INTERVAL_DEFAULT	SCTP_HB_DEFAULT_MSEC
-
-/* pmtu_raise_time: Default PMTU raise timer in seconds */
-#define SCTPCTL_PMTU_RAISE_TIME_DESC	"Default PMTU raise timer in seconds"
-#define SCTPCTL_PMTU_RAISE_TIME_MIN	0
-#define SCTPCTL_PMTU_RAISE_TIME_MAX	0xFFFFFFFF
-#define SCTPCTL_PMTU_RAISE_TIME_DEFAULT	SCTP_DEF_PMTU_RAISE_SEC
 
 /* shutdown_guard_time: Default shutdown guard timer in seconds */
 #define SCTPCTL_SHUTDOWN_GUARD_TIME_DESC	"Shutdown guard timer in seconds (0 means 5 times RTO.Max)"

@@ -68,10 +68,6 @@ int
 sctp_cookie_timer(struct sctp_inpcb *, struct sctp_tcb *,
     struct sctp_nets *);
 
-void
-sctp_pathmtu_timer(struct sctp_inpcb *, struct sctp_tcb *,
-    struct sctp_nets *);
-
 int
 sctp_shutdownack_timer(struct sctp_inpcb *, struct sctp_tcb *,
     struct sctp_nets *);
