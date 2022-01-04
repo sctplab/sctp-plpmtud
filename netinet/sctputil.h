@@ -62,6 +62,13 @@ void
 sctp_log_trace(uint32_t fr, const char *str SCTP_UNUSED, uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f);
 #endif
 
+#define SCTP_PLPMTUD_STEPSIZE 4
+#define SCTP_PLPMTUD_BASE_IPV4 1200
+#define SCTP_PLPMTUD_BASE_IPV6 1280
+#define SCTP_PLPMTUD_MAX_IP_SIZE 65535
+#define SCTP_PLPMTUD_ALGORITHM_UP 1
+#define SCTP_PLPMTUD_ALGORITHM_OPTBINARY 2
+
 #define sctp_get_associd(stcb) ((sctp_assoc_t)stcb->asoc.assoc_id)
 
 /*
@@ -409,6 +416,14 @@ uint32_t sctp_ticks_to_msecs(uint32_t);
 uint32_t sctp_msecs_to_ticks(uint32_t);
 uint32_t sctp_ticks_to_secs(uint32_t);
 uint32_t sctp_secs_to_ticks(uint32_t);
+
+void sctp_plpmtud_init(struct sctp_tcb *, struct sctp_nets *);
+void sctp_plpmtud_start(struct sctp_plpmtud *);
+void sctp_plpmtud_delayed_start(struct sctp_plpmtud *);
+void sctp_plpmtud_on_probe_acked(struct sctp_plpmtud *, uint32_t);
+void sctp_plpmtud_on_probe_timeout(struct sctp_plpmtud *);
+void sctp_plpmtud_on_ptb_received(struct sctp_plpmtud *, uint32_t);
+void sctp_plpmtud_on_pmtu_invalid(struct sctp_plpmtud *, uint32_t);
 
 #endif				/* _KERNEL */
 #endif

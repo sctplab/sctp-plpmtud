@@ -290,6 +290,43 @@ struct rtcc_cc {
 	uint8_t  last_inst_ind; /* Last saved inst indication */
 };
 
+TAILQ_HEAD(sctp_plpmtud_probe_head, sctp_plpmtud_probe);
+struct sctp_plpmtud_probe {
+	uint32_t size;
+	uint16_t count;
+	TAILQ_ENTRY(sctp_plpmtud_probe) next;
+};
+
+struct sctp_plpmtud {
+	struct sctp_tcb *stcb;
+	struct sctp_nets *net;
+	uint32_t timer_value;
+
+	uint32_t min_pmtu;
+	uint32_t max_pmtu;
+	uint32_t initial_min_pmtu;
+	uint32_t initial_max_pmtu;
+	uint32_t base_pmtu;
+	uint32_t overhead;
+	uint32_t probed_size;
+	uint16_t probe_count; /* used in BASE and SEARCH_COMPLETE */
+	struct sctp_plpmtud_probe_head probes; /* used in SEARCH */
+	uint8_t last_probe_acked; /* used in SEARCH */
+
+	/* used for candidate sequence in SEARCH */
+	uint32_t smallest_expired;
+	uint32_t smallest_failed;
+	uint32_t (*get_next_candidate)(struct sctp_plpmtud *);
+
+	/* state functions */
+	void (*start)(struct sctp_plpmtud *);
+	void (*on_probe_acked)(struct sctp_plpmtud *, uint32_t);
+	void (*on_probe_timeout)(struct sctp_plpmtud *, uint32_t);
+	void (*on_ptb_received)(struct sctp_plpmtud *, uint32_t);
+	void (*on_pmtu_invalid)(struct sctp_plpmtud *, uint32_t);
+	void (*end)(struct sctp_plpmtud *);
+};
+
 struct sctp_nets {
 	TAILQ_ENTRY(sctp_nets) sctp_next;	/* next link */
 
@@ -439,6 +476,7 @@ struct sctp_nets {
 	uint16_t plpmtud_max_probes;
 	uint32_t plpmtud_min_probe_rtx_time;
 	uint32_t plpmtud_raise_time;
+	struct sctp_plpmtud plpmtud;
 };
 
 struct sctp_data_chunkrec {
