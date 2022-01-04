@@ -649,6 +649,9 @@ sctp_handle_heartbeat_ack(struct sctp_heartbeat_chunk *cp,
 		 * confirm the destination.
 		 */
 		r_net->dest_state &= ~SCTP_ADDR_UNCONFIRMED;
+		if (net->plpmtud_enabled) {
+			sctp_plpmtud_start(&net->plpmtud);
+		}
 		if (r_net->dest_state & SCTP_ADDR_REQ_PRIMARY) {
 			stcb->asoc.primary_destination = r_net;
 			r_net->dest_state &= ~SCTP_ADDR_REQ_PRIMARY;
@@ -730,6 +733,10 @@ sctp_handle_heartbeat_ack(struct sctp_heartbeat_chunk *cp,
 			}
 			sctp_delete_prim_timer(stcb->sctp_ep, stcb);
 		}
+	}
+
+	if (cp->heartbeat.hb_info.probe_mtu > 0) {
+		sctp_plpmtud_on_probe_acked(&r_net->plpmtud, cp->heartbeat.hb_info.probe_mtu);
 	}
 }
 
@@ -888,12 +895,19 @@ sctp_start_net_timers(struct sctp_tcb *stcb)
 		 *    a hb as well if under max_hb_burst have
 		 *    been sent.
 		 */
-		sctp_timer_start(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net);
 		sctp_timer_start(SCTP_TIMER_TYPE_HEARTBEAT, stcb->sctp_ep, stcb, net);
-		if ((net->dest_state & SCTP_ADDR_UNCONFIRMED) &&
-		    (cnt_hb_sent < SCTP_BASE_SYSCTL(sctp_hb_maxburst))) {
-			sctp_send_hb(stcb, net, SCTP_SO_NOT_LOCKED);
-			cnt_hb_sent++;
+		if (net->dest_state & SCTP_ADDR_UNCONFIRMED) {
+			if (cnt_hb_sent < SCTP_BASE_SYSCTL(sctp_hb_maxburst)) {
+				sctp_send_hb(stcb, net, SCTP_SO_NOT_LOCKED);
+				cnt_hb_sent++;
+			}
+		} else if (net->plpmtud_enabled) {
+			if (cnt_hb_sent < SCTP_BASE_SYSCTL(sctp_hb_maxburst)) {
+				sctp_plpmtud_start(&net->plpmtud);
+				cnt_hb_sent++;
+			} else {
+				sctp_plpmtud_delayed_start(&net->plpmtud);
+			}
 		}
 	}
 	if (cnt_hb_sent) {
