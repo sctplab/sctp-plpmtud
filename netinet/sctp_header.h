@@ -102,9 +102,11 @@ struct sctp_heartbeat_info_param {
 	uint32_t time_value_2;
 	uint32_t random_value1;
 	uint32_t random_value2;
+	uint32_t probe_mtu;
 	uint8_t addr_family;
 	uint8_t addr_len;
-	uint16_t probe_mtu;
+	/* make sure that this structure is 4 byte aligned */
+	uint8_t padding[2];
 	char address[SCTP_ADDRMAX];
 } SCTP_PACKED;
 
@@ -328,7 +330,7 @@ struct sctp_shutdown_ack_chunk {
 /* Padding Chunk (PAD) */
 struct sctp_pad_chunk {
 	struct sctp_chunkhdr ch;
-	/* padding data follow */
+	uint8_t padding[];
 } SCTP_PACKED;
 
 /* Operation Error (ERROR) */
