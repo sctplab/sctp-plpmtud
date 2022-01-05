@@ -15168,9 +15168,8 @@ sctp_make_pad(struct sctp_tcb *stcb, struct sctp_nets *net, uint16_t pad_size)
 		/* no mbufs */
 		return NULL;
 	}
-	tmp_chk = chk;
 	size = pad_size;
-	while (tmp_chk != NULL && size > 0) {
+	for (tmp_chk = chk; tmp_chk != NULL && size > 0; tmp_chk = SCTP_BUF_NEXT(tmp_chk)) {
 #if __FreeBSD_version > 1100052
 		if (size < SCTP_BUF_SIZE(tmp_chk)) {
 			SCTP_BUF_LEN(tmp_chk) = size;
@@ -15197,16 +15196,14 @@ sctp_make_pad(struct sctp_tcb *stcb, struct sctp_nets *net, uint16_t pad_size)
 			}
 		}
 #endif
-		tmp_chk = SCTP_BUF_NEXT(tmp_chk);
 	}
 
-	//sctp_zero_m(chk, 0, pad_size);
+	/* sctp_zero_m(chk, 0, pad_size); */
 	pad = mtod(chk, struct sctp_pad_chunk *);
 	pad->ch.chunk_type = SCTP_PAD_CHUNK;
 	pad->ch.chunk_flags = 0;
 	pad->ch.chunk_length = htons(pad_size);
 
-	net->hb_responded = 0;
 	return chk;
 }
 
@@ -15229,8 +15226,6 @@ sctp_send_plpmtud_probe(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t p
 		return;
 	}
 	hb->heartbeat.hb_info.probe_mtu = probe_size;
-	//sctp_timer_stop(SCTP_TIMER_TYPE_HEARTBEAT, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_11);
-	//sctp_timer_start(SCTP_TIMER_TYPE_HEARTBEAT, stcb->sctp_ep, stcb, net);
 
 	pad_size = probe_size - sizeof(struct sctp_heartbeat_info_param) - sizeof(struct sctp_chunkhdr) - overhead;
 	if (pad_size > 0) {
@@ -15251,7 +15246,7 @@ sctp_send_plpmtud_probe(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t p
 	                                        net->flowtype, net->flowid,
 #endif
 	                                        SCTP_SO_NOT_LOCKED))) {
-		SCTPDBG(SCTP_DEBUG_OUTPUT3, "Gak send error %d\n", error);
+		SCTPDBG(SCTP_DEBUG_OUTPUT3, "send plpmtud probe error %d\n", error);
 		if (error == ENOBUFS) {
 			stcb->asoc.ifp_had_enobuf = 1;
 			SCTP_STAT_INCR(sctps_lowlevelerr);
@@ -15259,5 +15254,6 @@ sctp_send_plpmtud_probe(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t p
 	} else {
 		stcb->asoc.ifp_had_enobuf = 0;
 	}
+	SCTP_STAT_INCR_COUNTER64(sctps_outcontrolchunks);
 	SCTP_STAT_INCR_COUNTER64(sctps_outcontrolchunks);
 }
