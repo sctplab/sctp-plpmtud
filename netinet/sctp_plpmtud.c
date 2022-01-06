@@ -206,6 +206,7 @@ void
 sctp_plpmtud_on_probe_timeout(struct sctp_plpmtud *plpmtud)
 {
 	uint32_t expired_probe_size;
+
 	if (plpmtud->on_probe_timeout != NULL) {
 		expired_probe_size = plpmtud->probed_size;
 		plpmtud->on_probe_timeout(plpmtud, expired_probe_size);
@@ -232,6 +233,7 @@ void
 sctp_plpmtud_on_pmtu_invalid(struct sctp_plpmtud *plpmtud, uint32_t largest_sctp_packet_acked_since_loss)
 {
 	uint32_t largest_acked_since_loss;
+
 	if (plpmtud->on_pmtu_invalid != NULL) {
 		largest_acked_since_loss = largest_sctp_packet_acked_since_loss + plpmtud->overhead;
 		plpmtud->on_pmtu_invalid(plpmtud, largest_acked_since_loss);
@@ -241,6 +243,9 @@ sctp_plpmtud_on_pmtu_invalid(struct sctp_plpmtud *plpmtud, uint32_t largest_sctp
 static void
 sctp_plpmtud_send_probe(struct sctp_plpmtud *plpmtud, uint32_t size, uint8_t rapid)
 {
+	int clock_granularity;
+	uint32_t expected_response_time;
+
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: send probe for %u at %u\n", size, sctp_get_tick_count());
 	plpmtud->probe_count++;
 	plpmtud->probed_size = size;
@@ -250,8 +255,8 @@ sctp_plpmtud_send_probe(struct sctp_plpmtud *plpmtud, uint32_t size, uint8_t rap
 	 * rttvar = lastsv >> SCTP_RTT_VAR_SHIFT = lastsv >> 2 = lastsv / 4
 	 * --> 4*rttvar = lastsv
 	 */
-	int clock_granularity = 2 * max(1, 1000/hz);
-	uint32_t expected_response_time = (plpmtud->net->lastsa >> SCTP_RTT_SHIFT) + max(clock_granularity, plpmtud->net->lastsv);
+	clock_granularity = 2 * max(1, 1000/hz);
+	expected_response_time = (plpmtud->net->lastsa >> SCTP_RTT_SHIFT) + max(clock_granularity, plpmtud->net->lastsv);
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: expected_response_time = (%d >> %d) + max(2*%d, %d) = %d + %d = %u\n", plpmtud->net->lastsa, SCTP_RTT_SHIFT, clock_granularity, plpmtud->net->lastsv, (plpmtud->net->lastsa >> SCTP_RTT_SHIFT), max((2*clock_granularity), plpmtud->net->lastsv), expected_response_time);
 	if (rapid) {
 		plpmtud->timer_value = expected_response_time;
