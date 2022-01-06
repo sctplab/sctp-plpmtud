@@ -232,9 +232,9 @@ struct sctp_sysctl {
 
 /* plpmtud_ipv4_min_pmtu: IPv4 minimum path MTU - 76 B is the size of an IP packet containing only an SCTP packet with a HEARTBEAT chunk and heartbeat information */
 #define SCTPCTL_PLPMTUD_IPv4_MIN_MTU_DESC	"IPv4 minimum path MTU"
-#define SCTPCTL_PLPMTUD_IPv4_MIN_MTU_MIN	76
+#define SCTPCTL_PLPMTUD_IPv4_MIN_MTU_MIN	576
 #define SCTPCTL_PLPMTUD_IPv4_MIN_MTU_MAX	0xFFFFFFFF
-#define SCTPCTL_PLPMTUD_IPv4_MIN_MTU_DEFAULT	76
+#define SCTPCTL_PLPMTUD_IPv4_MIN_MTU_DEFAULT	576
 
 /* plpmtud_ipv6_min_mtu: IPv6 minimum path MTU */
 #define SCTPCTL_PLPMTUD_IPv6_MIN_MTU_DESC	"IPv6 minimum path MTU"
