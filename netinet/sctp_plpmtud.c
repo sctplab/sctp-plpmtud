@@ -68,7 +68,7 @@ __FBSDID("$FreeBSD$");
 
 
 static void
-sctp_plpmtud_newstate(struct sctp_plpmtud *, enum sctp_plpmtud_states);
+sctp_plpmtud_newstate(struct sctp_plpmtud *, uint8_t);
 
 static void
 sctp_plpmtud_send_probe(struct sctp_plpmtud *plpmtud, uint32_t size, uint8_t rapid)
@@ -150,7 +150,7 @@ sctp_plpmtud_disabled_start(struct sctp_plpmtud *plpmtud) {
 	}
 
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: start with min_pmtu=%u, max_pmtu=%u, initial_min_pmtu=%u, initial_max_pmtu=%u, overhead=%u\n", plpmtud->min_pmtu, plpmtud->max_pmtu, plpmtud->initial_min_pmtu, plpmtud->initial_max_pmtu, plpmtud->overhead);
-	sctp_plpmtud_newstate(plpmtud, BASE);
+	sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_BASE);
 }
 
 static void
@@ -180,9 +180,9 @@ sctp_plpmtud_base_on_probe_acked(struct sctp_plpmtud *plpmtud, uint32_t acked_pr
 	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, plpmtud->stcb->sctp_ep, plpmtud->stcb, plpmtud->net, SCTP_FROM_SCTPUTIL + SCTP_LOC_1);
 	if (acked_probe_size < plpmtud->max_pmtu) {
 		plpmtud->min_pmtu = acked_probe_size;
-		sctp_plpmtud_newstate(plpmtud, SEARCH);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_SEARCH);
 	} else {
-		sctp_plpmtud_newstate(plpmtud, SEARCH_COMPLETE);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_SEARCHCOMPLETE);
 	}
 }
 
@@ -193,7 +193,7 @@ sctp_plpmtud_base_on_probe_timeout(struct sctp_plpmtud *plpmtud, uint32_t expire
 	if (plpmtud->probe_count < plpmtud->net->plpmtud_max_probes) {
 		sctp_plpmtud_send_probe(plpmtud, expired_probe_size, 0);
 	} else {
-		sctp_plpmtud_newstate(plpmtud, ERROR);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_ERROR);
 	}
 }
 
@@ -203,7 +203,7 @@ sctp_plpmtud_base_on_ptb_received(struct sctp_plpmtud *plpmtud, uint32_t ptb_mtu
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: BASE PTB received reporting an MTU of %u\n", ptb_mtu);
 	if (plpmtud->min_pmtu <= ptb_mtu && ptb_mtu < plpmtud->base_pmtu) {
 		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, plpmtud->stcb->sctp_ep, plpmtud->stcb, plpmtud->net, SCTP_FROM_SCTPUTIL + SCTP_LOC_1);
-		sctp_plpmtud_newstate(plpmtud, ERROR);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_ERROR);
 	}
 }
 
@@ -226,7 +226,7 @@ sctp_plpmtud_error_on_probe_acked(struct sctp_plpmtud *plpmtud, uint32_t acked_p
 {
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: ERROR %u acked\n", acked_probe_size);
 	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, plpmtud->stcb->sctp_ep, plpmtud->stcb, plpmtud->net, SCTP_FROM_SCTPUTIL + SCTP_LOC_1);
-	sctp_plpmtud_newstate(plpmtud, SEARCH);
+	sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_SEARCH);
 }
 
 static void
@@ -406,7 +406,7 @@ sctp_plpmtud_search_on_probe_acked(struct sctp_plpmtud *plpmtud, uint32_t acked_
 	sctp_plpmtud_set_pmtu(plpmtud, acked_probe_size);
 	if (plpmtud->net->mtu >= plpmtud->max_pmtu) {
 		/* max PMTU acked, transistion to SEARCH_COMPLETE */
-		return sctp_plpmtud_newstate(plpmtud, SEARCH_COMPLETE);
+		return sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_SEARCHCOMPLETE);
 	}
 	sctp_plpmtud_search_remove_probes(&(plpmtud->probes), acked_probe_size, 1, 1, 0);
 	if (acked_probe_size >= plpmtud->smallest_expired) {
@@ -423,7 +423,7 @@ sctp_plpmtud_search_on_probe_acked(struct sctp_plpmtud *plpmtud, uint32_t acked_
 	if (probe_size > 0) {
 		sctp_plpmtud_search_send_probe(plpmtud, probe_size);
 	} else {
-		sctp_plpmtud_newstate(plpmtud, SEARCH_COMPLETE);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_SEARCHCOMPLETE);
 	}
 }
 
@@ -445,7 +445,7 @@ sctp_plpmtud_search_on_probe_timeout(struct sctp_plpmtud *plpmtud, uint32_t expi
 	if (probe_size > 0) {
 		sctp_plpmtud_search_send_probe(plpmtud, probe_size);
 	} else {
-		sctp_plpmtud_newstate(plpmtud, SEARCH_COMPLETE);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_SEARCHCOMPLETE);
 	}
 }
 
@@ -458,11 +458,11 @@ sctp_plpmtud_search_on_ptb_received(struct sctp_plpmtud *plpmtud, uint32_t ptb_m
 	if (ptb_mtu < plpmtud->net->mtu) {
 		/* reported MTU is smaller than a previously successful probed size. Go back to BASE. */
 		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, plpmtud->stcb->sctp_ep, plpmtud->stcb, plpmtud->net, SCTP_FROM_SCTPUTIL + SCTP_LOC_3);
-		sctp_plpmtud_newstate(plpmtud, BASE);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_BASE);
 	} else if (ptb_mtu == plpmtud->net->mtu) {
 		/* reported MTU confirmed current PMTU. Transition to SEARCH_COMPLETE */
 		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, plpmtud->stcb->sctp_ep, plpmtud->stcb, plpmtud->net, SCTP_FROM_SCTPUTIL + SCTP_LOC_4);
-		sctp_plpmtud_newstate(plpmtud, SEARCH_COMPLETE);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_SEARCHCOMPLETE);
 	} else if (!sctp_plpmtud_search_exists_larger_probe(&(plpmtud->probes), ptb_mtu)) {
 		/* no probe sent that would trigger this PTB, ignore. */
 	} else {
@@ -484,7 +484,7 @@ sctp_plpmtud_search_on_pmtu_invalid(struct sctp_plpmtud *plpmtud, uint32_t large
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: SEARCH PMTU reported invalid with largestAckedSinceLoss=%u\n", largest_acked_since_loss);
 	/* return to BASE */
 	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, plpmtud->stcb->sctp_ep, plpmtud->stcb, plpmtud->net, SCTP_FROM_SCTPUTIL + SCTP_LOC_6);
-	sctp_plpmtud_newstate(plpmtud, BASE);
+	sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_BASE);
 }
 
 static void
@@ -531,7 +531,7 @@ sctp_plpmtud_searchcomplete_on_probe_acked(struct sctp_plpmtud *plpmtud, uint32_
 	sctp_plpmtud_set_pmtu(plpmtud, acked_probe_size);
 	if (plpmtud->net->mtu < plpmtud->max_pmtu) {
 		plpmtud->min_pmtu = acked_probe_size;
-		sctp_plpmtud_newstate(plpmtud, SEARCH);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_SEARCH);
 	}
 }
 
@@ -570,7 +570,7 @@ sctp_plpmtud_searchcomplete_on_ptb_received(struct sctp_plpmtud *plpmtud, uint32
 		/* reported MTU is smaller than the current PMTU. Go back to BASE. */
 		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, plpmtud->stcb->sctp_ep, plpmtud->stcb, plpmtud->net, SCTP_FROM_SCTPUTIL + SCTP_LOC_8);
 		plpmtud->max_pmtu = ptb_mtu;
-		sctp_plpmtud_newstate(plpmtud, BASE);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_BASE);
 	} else if (ptb_mtu == plpmtud->net->mtu) {
 		/* reported MTU confirmed the current PMTU. Reschedule RAISE_TIMER */
 		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, plpmtud->stcb->sctp_ep, plpmtud->stcb, plpmtud->net, SCTP_FROM_SCTPUTIL + SCTP_LOC_9);
@@ -593,9 +593,9 @@ sctp_plpmtud_searchcomplete_on_pmtu_invalid(struct sctp_plpmtud *plpmtud, uint32
 	if (largest_acked_since_loss >= plpmtud->min_pmtu) {
 		plpmtud->min_pmtu = largest_acked_since_loss;
 		sctp_plpmtud_set_pmtu(plpmtud, largest_acked_since_loss);
-		sctp_plpmtud_newstate(plpmtud, SEARCH);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_SEARCH);
 	} else {
-		sctp_plpmtud_newstate(plpmtud, BASE);
+		sctp_plpmtud_newstate(plpmtud, SCTP_PLPMTUD_STATE_BASE);
 	}
 }
 
@@ -612,7 +612,7 @@ sctp_plpmtud_init(struct sctp_tcb *stcb, struct sctp_nets *net)
 	plpmtud->net = net;
 	plpmtud->timer_value = 0;
 	plpmtud->probed_size = 0;
-	plpmtud->state = DISABLED;
+	plpmtud->state = SCTP_PLPMTUD_STATE_DISABLED;
 
 	/* determine max_pmtu */
 	plpmtud->max_pmtu = (SCTP_PLPMTUD_MAX_IP_SIZE >> 2) << 2;
@@ -660,18 +660,16 @@ void
 sctp_plpmtud_start(struct sctp_plpmtud *plpmtud)
 {
 	switch (plpmtud->state) {
-	case DISABLED:
+	case SCTP_PLPMTUD_STATE_DISABLED:
 		return sctp_plpmtud_disabled_start(plpmtud);
-	case BASE:
+	case SCTP_PLPMTUD_STATE_BASE:
 		return sctp_plpmtud_base_start(plpmtud);
-	case ERROR:
+	case SCTP_PLPMTUD_STATE_ERROR:
 		return sctp_plpmtud_error_start(plpmtud);
-	case SEARCH:
+	case SCTP_PLPMTUD_STATE_SEARCH:
 		return sctp_plpmtud_search_start(plpmtud);
-	case SEARCH_COMPLETE:
+	case SCTP_PLPMTUD_STATE_SEARCHCOMPLETE:
 		return sctp_plpmtud_searchcomplete_start(plpmtud);
-	default:
-		return;
 	}
 }
 
@@ -703,16 +701,14 @@ void
 sctp_plpmtud_on_probe_acked(struct sctp_plpmtud *plpmtud, uint32_t acked_probe_size)
 {
 	switch (plpmtud->state) {
-	case BASE:
+	case SCTP_PLPMTUD_STATE_BASE:
 		return sctp_plpmtud_base_on_probe_acked(plpmtud, acked_probe_size);
-	case ERROR:
+	case SCTP_PLPMTUD_STATE_ERROR:
 		return sctp_plpmtud_error_on_probe_acked(plpmtud, acked_probe_size);
-	case SEARCH:
+	case SCTP_PLPMTUD_STATE_SEARCH:
 		return sctp_plpmtud_search_on_probe_acked(plpmtud, acked_probe_size);
-	case SEARCH_COMPLETE:
+	case SCTP_PLPMTUD_STATE_SEARCHCOMPLETE:
 		return sctp_plpmtud_searchcomplete_on_probe_acked(plpmtud, acked_probe_size);
-	default:
-		return;
 	}
 }
 
@@ -723,18 +719,16 @@ sctp_plpmtud_on_probe_timeout(struct sctp_plpmtud *plpmtud)
 
 	expired_probe_size = plpmtud->probed_size;
 	switch (plpmtud->state) {
-	case DISABLED:
+	case SCTP_PLPMTUD_STATE_DISABLED:
 		return sctp_plpmtud_disabled_on_probe_timeout(plpmtud, expired_probe_size);
-	case BASE:
+	case SCTP_PLPMTUD_STATE_BASE:
 		return sctp_plpmtud_base_on_probe_timeout(plpmtud, expired_probe_size);
-	case ERROR:
+	case SCTP_PLPMTUD_STATE_ERROR:
 		return sctp_plpmtud_error_on_probe_timeout(plpmtud, expired_probe_size);
-	case SEARCH:
+	case SCTP_PLPMTUD_STATE_SEARCH:
 		return sctp_plpmtud_search_on_probe_timeout(plpmtud, expired_probe_size);
-	case SEARCH_COMPLETE:
+	case SCTP_PLPMTUD_STATE_SEARCHCOMPLETE:
 		return sctp_plpmtud_searchcomplete_on_probe_timeout(plpmtud, expired_probe_size);
-	default:
-		return;
 	}
 }
 
@@ -752,14 +746,12 @@ sctp_plpmtud_on_ptb_received(struct sctp_plpmtud *plpmtud, uint32_t ptb_mtu)
 	}
 
 	switch (plpmtud->state) {
-	case BASE:
+	case SCTP_PLPMTUD_STATE_BASE:
 		return sctp_plpmtud_base_on_ptb_received(plpmtud, ptb_mtu);
-	case SEARCH:
+	case SCTP_PLPMTUD_STATE_SEARCH:
 		return sctp_plpmtud_search_on_ptb_received(plpmtud, ptb_mtu);
-	case SEARCH_COMPLETE:
+	case SCTP_PLPMTUD_STATE_SEARCHCOMPLETE:
 		return sctp_plpmtud_searchcomplete_on_ptb_received(plpmtud, ptb_mtu);
-	default:
-		return;
 	}
 }
 
@@ -770,12 +762,10 @@ sctp_plpmtud_on_pmtu_invalid(struct sctp_plpmtud *plpmtud, uint32_t largest_sctp
 
 	largest_acked_since_loss = largest_sctp_packet_acked_since_loss + plpmtud->overhead;
 	switch (plpmtud->state) {
-	case SEARCH:
+	case SCTP_PLPMTUD_STATE_SEARCH:
 		return sctp_plpmtud_search_on_pmtu_invalid(plpmtud, largest_sctp_packet_acked_since_loss);
-	case SEARCH_COMPLETE:
+	case SCTP_PLPMTUD_STATE_SEARCHCOMPLETE:
 		return sctp_plpmtud_searchcomplete_on_pmtu_invalid(plpmtud, largest_sctp_packet_acked_since_loss);
-	default:
-		return;
 	}
 }
 
@@ -783,15 +773,13 @@ static void
 sctp_plpmtud_end(struct sctp_plpmtud *plpmtud)
 {
 	switch (plpmtud->state) {
-	case SEARCH:
+	case SCTP_PLPMTUD_STATE_SEARCH:
 		return sctp_plpmtud_search_end(plpmtud);
-	default:
-		return;
 	}
 }
 
 static void
-sctp_plpmtud_newstate(struct sctp_plpmtud *plpmtud, enum sctp_plpmtud_states newstate)
+sctp_plpmtud_newstate(struct sctp_plpmtud *plpmtud, uint8_t newstate)
 {
 	sctp_plpmtud_end(plpmtud);
 	plpmtud->state = newstate;
