@@ -290,6 +290,16 @@ struct rtcc_cc {
 	uint8_t  last_inst_ind; /* Last saved inst indication */
 };
 
+enum
+sctp_plpmtud_states
+{
+  DISABLED,
+  BASE,
+  ERROR,
+  SEARCH,
+  SEARCH_COMPLETE
+};
+
 TAILQ_HEAD(sctp_plpmtud_probe_head, sctp_plpmtud_probe);
 struct sctp_plpmtud_probe {
 	uint32_t size;
@@ -318,13 +328,7 @@ struct sctp_plpmtud {
 	uint32_t smallest_failed;
 	uint32_t (*get_next_candidate)(struct sctp_plpmtud *);
 
-	/* state functions */
-	void (*start)(struct sctp_plpmtud *);
-	void (*on_probe_acked)(struct sctp_plpmtud *, uint32_t);
-	void (*on_probe_timeout)(struct sctp_plpmtud *, uint32_t);
-	void (*on_ptb_received)(struct sctp_plpmtud *, uint32_t);
-	void (*on_pmtu_invalid)(struct sctp_plpmtud *, uint32_t);
-	void (*end)(struct sctp_plpmtud *);
+	enum sctp_plpmtud_states state;
 };
 
 struct sctp_nets {
