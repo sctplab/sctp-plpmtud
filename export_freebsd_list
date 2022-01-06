@@ -23,6 +23,8 @@ netinet/sctp_pcb.c
 netinet/sctp_pcb.h
 netinet/sctp_peeloff.c
 netinet/sctp_peeloff.h
+netinet/sctp_plpmtud.c
+netinet/sctp_plpmtud.h
 netinet/sctp_os.h
 netinet/sctp_os_bsd.h
 netinet/sctp_structs.h

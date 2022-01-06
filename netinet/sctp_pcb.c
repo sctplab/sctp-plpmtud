@@ -51,6 +51,7 @@ __FBSDID("$FreeBSD$");
 #include <netinet/sctp_output.h>
 #include <netinet/sctp_timer.h>
 #include <netinet/sctp_bsd_addr.h>
+#include <netinet/sctp_plpmtud.h>
 #if defined(INET) || defined(INET6)
 #if !defined(_WIN32)
 #include <netinet/udp.h>

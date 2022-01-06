@@ -56,6 +56,7 @@ __FBSDID("$FreeBSD$");
 #include <netinet/sctp_timer.h>
 #include <netinet/sctp_auth.h>
 #include <netinet/sctp_bsd_addr.h>
+#include <netinet/sctp_plpmtud.h>
 #if defined(__Userspace__)
 #include <netinet/sctp_callout.h>
 #else
