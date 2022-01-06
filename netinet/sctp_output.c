@@ -15212,35 +15212,76 @@ void
 sctp_send_plpmtud_probe(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t probe_size, uint32_t overhead)
 {
 	int error;
-	uint16_t pad_size;
-	struct mbuf *m_hb, *m_pad;
+	uint8_t chunk_to_auth;
+	uint16_t auth_size, hb_size, pad_size;
+	uint32_t auth_offset;
+	struct sctp_auth_chunk *auth;
 	struct sctp_heartbeat_chunk *hb;
+	struct mbuf *m_hb, *m_pad, *m_auth;
 
-	if (probe_size < (sizeof(struct sctp_heartbeat_info_param) + sizeof(struct sctp_chunkhdr) + overhead)) {
+	/* calculate size of auth and heartbeat chunk */
+	auth_size = 0;
+	hb_size = sizeof(struct sctp_heartbeat_info_param) + sizeof(struct sctp_chunkhdr);
+	if (sctp_auth_is_required_chunk(SCTP_HEARTBEAT_REQUEST, stcb->asoc.peer_auth_chunks)
+	 || (probe_size > (overhead + hb_size)
+	  && sctp_auth_is_required_chunk(SCTP_PAD_CHUNK, stcb->asoc.peer_auth_chunks))) {
+		auth_size = sctp_get_auth_chunk_len(stcb->asoc.peer_hmac_id);
+	}
+	/* check if probe_size is large enough to contain the auth and heartbeat chunk */
+	if (probe_size < (overhead + auth_size + hb_size)) {
 		SCTPDBG(SCTP_DEBUG_OUTPUT3, "Can't send such small probe packet %u\n", probe_size);
 		return;
 	}
 
+	/* make auth chunk, if required */
+	auth = NULL;
+	auth_offset = 0;
+	m_auth = NULL;
+	if (auth_size > 0) {
+		if (sctp_auth_is_required_chunk(SCTP_HEARTBEAT_REQUEST, stcb->asoc.peer_auth_chunks)) {
+			chunk_to_auth = SCTP_HEARTBEAT_REQUEST;
+		} else {
+			chunk_to_auth = SCTP_PAD_CHUNK;
+		}
+		m_auth = sctp_add_auth_chunk(m_auth, &m_auth, &auth, &auth_offset, stcb, chunk_to_auth);
+		if (m_auth == NULL) {
+			return;
+		}
+	}
+
+	/* make heartbeat chunk */
 	hb = NULL;
 	m_hb = sctp_make_hb(stcb, net, &hb);
 	if (m_hb == NULL) {
+		if (m_auth != NULL) {
+			sctp_m_freem(m_auth);
+		}
 		return;
 	}
 	hb->heartbeat.hb_info.probe_mtu = probe_size;
+	if (m_auth != NULL) {
+		SCTP_BUF_NEXT(m_auth) = m_hb;
+	}
 
-	pad_size = probe_size - sizeof(struct sctp_heartbeat_info_param) - sizeof(struct sctp_chunkhdr) - overhead;
+	/* make pad chunk, if required */
+	pad_size = probe_size - (overhead + auth_size + hb_size);
 	if (pad_size > 0) {
 		m_pad = sctp_make_pad(stcb, net, pad_size);
 		if (m_pad == NULL) {
+			if (m_auth != NULL) {
+				sctp_m_freem(m_auth);
+			}
 			sctp_m_freem(m_hb);
 			return;
 		}
 
 		SCTP_BUF_NEXT(m_hb) = m_pad;
 	}
+
+	/* send out probe packet */
 	if ((error = sctp_lowlevel_chunk_output(stcb->sctp_ep, stcb, net,
 	                                        (struct sockaddr *)&net->ro._l_addr,
-	                                        m_hb, 0, NULL, stcb->asoc.authinfo.active_keyid, 1, 0, 0,
+	                                        (m_auth == NULL ? m_hb : m_auth), auth_offset, auth, stcb->asoc.authinfo.active_keyid, 1, 0, 0,
 	                                        stcb->sctp_ep->sctp_lport, stcb->rport, htonl(stcb->asoc.peer_vtag),
 	                                        net->port, NULL,
 #if defined(__FreeBSD__) && !defined(__Userspace__)
@@ -15255,6 +15296,12 @@ sctp_send_plpmtud_probe(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t p
 	} else {
 		stcb->asoc.ifp_had_enobuf = 0;
 	}
+
+	if (auth_size > 0) {
+		SCTP_STAT_INCR_COUNTER64(sctps_outcontrolchunks);
+	}
 	SCTP_STAT_INCR_COUNTER64(sctps_outcontrolchunks);
-	SCTP_STAT_INCR_COUNTER64(sctps_outcontrolchunks);
+	if (pad_size > 0) {
+		SCTP_STAT_INCR_COUNTER64(sctps_outcontrolchunks);
+	}
 }
