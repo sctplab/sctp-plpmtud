@@ -3120,11 +3120,6 @@ sctp_move_pcb_and_assoc(struct sctp_inpcb *old_inp, struct sctp_inpcb *new_inp,
 			new_inp->hashasocidmark)];
 		LIST_INSERT_HEAD(lhd, stcb, sctp_tcbasocidhash);
 	}
-	/* Ok. Let's restart timer. */
-	TAILQ_FOREACH(net, &stcb->asoc.nets, sctp_next) {
-		sctp_timer_start(SCTP_TIMER_TYPE_PATHMTURAISE, new_inp,
-		    stcb, net);
-	}
 
 	SCTP_INP_INFO_WUNLOCK();
 	if (new_inp->sctp_tcbhash != NULL) {
