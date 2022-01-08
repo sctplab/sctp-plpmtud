@@ -2998,10 +2998,10 @@ sctp_getopt(struct socket *so, int optname, void *optval, size_t *optsize,
 					paddrp->spp_flags |= SPP_HB_ENABLE;
 				}
 				/* get flags for PMTU */
-				if (net->dest_state & SCTP_ADDR_NO_PMTUD) {
-					paddrp->spp_flags |= SPP_PMTUD_DISABLE;
-				} else {
+				if (net->plpmtud_enabled) {
 					paddrp->spp_flags |= SPP_PMTUD_ENABLE;
+				} else {
+					paddrp->spp_flags |= SPP_PMTUD_DISABLE;
 				}
 				if (net->dscp & 0x01) {
 					paddrp->spp_dscp = net->dscp & 0xfc;
@@ -3037,10 +3037,10 @@ sctp_getopt(struct socket *so, int optname, void *optval, size_t *optsize,
 				} else {
 					paddrp->spp_flags |= SPP_HB_ENABLE;
 				}
-				if (sctp_stcb_is_feature_on(inp, stcb, SCTP_PCB_FLAGS_DO_NOT_PMTUD)) {
-					paddrp->spp_flags |= SPP_PMTUD_DISABLE;
-				} else {
+				if (stcb->asoc.plpmtud_enabled) {
 					paddrp->spp_flags |= SPP_PMTUD_ENABLE;
+				} else {
+					paddrp->spp_flags |= SPP_PMTUD_DISABLE;
 				}
 				paddrp->spp_hbinterval = stcb->asoc.heart_beat_delay;
 			}
@@ -3075,7 +3075,7 @@ sctp_getopt(struct socket *so, int optname, void *optval, size_t *optsize,
 				} else {
 					paddrp->spp_flags |= SPP_HB_DISABLE;
 				}
-				if (sctp_is_feature_off(inp, SCTP_PCB_FLAGS_DO_NOT_PMTUD)) {
+				if (inp->plpmtud_enabled) {
 					paddrp->spp_flags |= SPP_PMTUD_ENABLE;
 				} else {
 					paddrp->spp_flags |= SPP_PMTUD_DISABLE;
@@ -6115,11 +6115,13 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 					}
 				}
 				if (paddrp->spp_flags & SPP_PMTUD_DISABLE) {
-					if (SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
-						sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, inp, stcb, net,
-								SCTP_FROM_SCTP_USRREQ + SCTP_LOC_11);
+					if (net->plpmtud_enabled) {
+						sctp_plpmtud_end(stcb, net);
+						if (SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
+							sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_USRREQ + SCTP_LOC_11);
+						}
+						net->plpmtud_enabled = false;
 					}
-					net->dest_state |= SCTP_ADDR_NO_PMTUD;
 					if (paddrp->spp_pathmtu > 0) {
 						net->mtu = paddrp->spp_pathmtu;
 						switch (net->ro._l_addr.sa.sa_family) {
@@ -6147,10 +6149,11 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 					}
 				}
 				if (paddrp->spp_flags & SPP_PMTUD_ENABLE) {
-					if (!SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
-						sctp_timer_start(SCTP_TIMER_TYPE_PATHMTURAISE, inp, stcb, net);
+					if (!net->plpmtud_enabled) {
+						net->plpmtud_enabled = true;
+						sctp_plpmtud_init(stcb, net);
+						sctp_plpmtud_start(stcb, net);
 					}
-					net->dest_state &= ~SCTP_ADDR_NO_PMTUD;
 				}
 				if (paddrp->spp_pathmaxrxt > 0) {
 					if (net->dest_state & SCTP_ADDR_PF) {
@@ -6264,11 +6267,13 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 				}
 				if (paddrp->spp_flags & SPP_PMTUD_DISABLE) {
 					TAILQ_FOREACH(net, &stcb->asoc.nets, sctp_next) {
-						if (SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
-							sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, inp, stcb, net,
-									SCTP_FROM_SCTP_USRREQ + SCTP_LOC_16);
+						if (net->plpmtud_enabled) {
+							sctp_plpmtud_end(stcb, net);
+							if (SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
+								sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_USRREQ + SCTP_LOC_11);
+							}
+							net->plpmtud_enabled = false;
 						}
-						net->dest_state |= SCTP_ADDR_NO_PMTUD;
 						if (paddrp->spp_pathmtu > 0) {
 							net->mtu = paddrp->spp_pathmtu;
 							switch (net->ro._l_addr.sa.sa_family) {
@@ -6298,17 +6303,18 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 					if (paddrp->spp_pathmtu > 0) {
 						stcb->asoc.default_mtu = paddrp->spp_pathmtu;
 					}
-					sctp_stcb_feature_on(inp, stcb, SCTP_PCB_FLAGS_DO_NOT_PMTUD);
+					stcb->asoc.plpmtud_enabled = false;
 				}
 				if (paddrp->spp_flags & SPP_PMTUD_ENABLE) {
+					stcb->asoc.plpmtud_enabled = true;
 					TAILQ_FOREACH(net, &stcb->asoc.nets, sctp_next) {
-						if (!SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
-							sctp_timer_start(SCTP_TIMER_TYPE_PATHMTURAISE, inp, stcb, net);
+						if (!net->plpmtud_enabled) {
+							net->plpmtud_enabled = true;
+							sctp_plpmtud_init(stcb, net);
+							sctp_plpmtud_start(stcb, net);
 						}
-						net->dest_state &= ~SCTP_ADDR_NO_PMTUD;
 					}
 					stcb->asoc.default_mtu = 0;
-					sctp_stcb_feature_off(inp, stcb, SCTP_PCB_FLAGS_DO_NOT_PMTUD);
 				}
 				if (paddrp->spp_flags & SPP_DSCP) {
 					TAILQ_FOREACH(net, &stcb->asoc.nets, sctp_next) {
@@ -6366,13 +6372,13 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 					sctp_feature_on(inp, SCTP_PCB_FLAGS_DONOT_HEARTBEAT);
 				}
 				if (paddrp->spp_flags & SPP_PMTUD_ENABLE) {
+					inp->plpmtud_enabled = true;
 					inp->sctp_ep.default_mtu = 0;
-					sctp_feature_off(inp, SCTP_PCB_FLAGS_DO_NOT_PMTUD);
 				} else if (paddrp->spp_flags & SPP_PMTUD_DISABLE) {
+					inp->plpmtud_enabled = false;
 					if (paddrp->spp_pathmtu > 0) {
 						inp->sctp_ep.default_mtu = paddrp->spp_pathmtu;
 					}
-					sctp_feature_on(inp, SCTP_PCB_FLAGS_DO_NOT_PMTUD);
 				}
 				if (paddrp->spp_flags & SPP_DSCP) {
 					inp->sctp_ep.default_dscp = paddrp->spp_dscp & 0xfc;

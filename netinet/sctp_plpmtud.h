@@ -65,6 +65,7 @@ void sctp_plpmtud_on_probe_acked(struct sctp_tcb *, struct sctp_nets *, uint32_t
 void sctp_plpmtud_on_probe_timeout(struct sctp_tcb *, struct sctp_nets *);
 void sctp_plpmtud_on_ptb_received(struct sctp_tcb *, struct sctp_nets *, uint32_t);
 void sctp_plpmtud_on_pmtu_invalid(struct sctp_tcb *, struct sctp_nets *, uint32_t);
+void sctp_plpmtud_end(struct sctp_tcb *stcb, struct sctp_nets *net);
 
 #endif				/* _KERNEL */
 #endif
