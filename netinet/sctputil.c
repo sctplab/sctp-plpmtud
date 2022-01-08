@@ -2185,7 +2185,7 @@ out_decr:
  * |SCTP_TIMER_TYPE_HEARTBEAT    |Yes |Yes |Yes |
  * |SCTP_TIMER_TYPE_COOKIE       |Yes |Yes |Yes |
  * |SCTP_TIMER_TYPE_NEWCOOKIE    |Yes |No  |No  |
- * |SCTP_TIMER_TYPE_PATHMTURAISE |Yes |Yes |Yes |
+ * |SCTP_TIMER_TYPE_PATHMTURAISE |No  |Yes |Yes |
  * |SCTP_TIMER_TYPE_SHUTDOWNACK  |Yes |Yes |Yes |
  * |SCTP_TIMER_TYPE_ASCONF       |Yes |Yes |Yes |
  * |SCTP_TIMER_TYPE_SHUTDOWNGUARD|Yes |Yes |No  |
@@ -2394,22 +2394,18 @@ sctp_timer_start(int t_type, struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 		to_ticks = inp->sctp_ep.sctp_timeoutticks[SCTP_TIMER_SIGNATURE];
 		break;
 	case SCTP_TIMER_TYPE_PATHMTURAISE:
-		/*
-		 * Here we use the value found in the EP for PMTUD, ususually
-		 * about 10 minutes.
-		 */
-		if ((inp == NULL) || (stcb == NULL) || (net == NULL)) {
+		if ((stcb == NULL) || (net == NULL)) {
 #ifdef INVARIANTS
-			panic("sctp_timer_start of type %d: inp = %p, stcb = %p, net = %p",
-			      t_type, inp, stcb, net);
+			panic("sctp_timer_start of type %d: stcb = %p, net = %p",
+			      t_type, stcb, net);
 #else
 			return;
 #endif
 		}
 		if (!net->plpmtud_enabled) {
 			SCTPDBG(SCTP_DEBUG_TIMER2,
-			        "Timer type %d not started: inp=%p, stcb=%p, net=%p.\n",
-			        t_type, inp, stcb, net);
+			        "Timer type %d not started: stcb=%p, net=%p.\n",
+			        t_type, stcb, net);
 			return;
 		}
 		KASSERT(net->plpmtud_timer_value > 0,
@@ -2644,7 +2640,7 @@ sctp_timer_start(int t_type, struct sctp_inpcb *inp, struct sctp_tcb *stcb,
  * |SCTP_TIMER_TYPE_HEARTBEAT    |Yes |Yes |Yes |
  * |SCTP_TIMER_TYPE_COOKIE       |Yes |Yes |Yes |
  * |SCTP_TIMER_TYPE_NEWCOOKIE    |Yes |No  |No  |
- * |SCTP_TIMER_TYPE_PATHMTURAISE |Yes |Yes |Yes |
+ * |SCTP_TIMER_TYPE_PATHMTURAISE |No  |Yes |Yes |
  * |SCTP_TIMER_TYPE_SHUTDOWNACK  |Yes |Yes |Yes |
  * |SCTP_TIMER_TYPE_ASCONF       |Yes |Yes |No  |
  * |SCTP_TIMER_TYPE_SHUTDOWNGUARD|Yes |Yes |No  |
@@ -2753,10 +2749,10 @@ sctp_timer_stop(int t_type, struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 		tmr = &inp->sctp_ep.signature_change;
 		break;
 	case SCTP_TIMER_TYPE_PATHMTURAISE:
-		if ((inp == NULL) || (stcb == NULL) || (net == NULL)) {
+		if ((stcb == NULL) || (net == NULL)) {
 #ifdef INVARIANTS
-			panic("sctp_timer_stop of type %d: inp = %p, stcb = %p, net = %p",
-			      t_type, inp, stcb, net);
+			panic("sctp_timer_stop of type %d: stcb = %p, net = %p",
+			      t_type, stcb, net);
 #else
 			return;
 #endif
