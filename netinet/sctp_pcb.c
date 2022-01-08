@@ -4552,9 +4552,6 @@ sctp_add_remote_addr(struct sctp_tcb *stcb, struct sockaddr *newaddr,
 	}
 	net->dest_state |= SCTP_ADDR_NO_PMTUD;
 	net->plpmtud_enabled = stcb->asoc.plpmtud_enabled;
-	net->plpmtud_ipv4_min_mtu = stcb->asoc.plpmtud_ipv4_min_mtu;
-	net->plpmtud_ipv6_min_mtu = stcb->asoc.plpmtud_ipv6_min_mtu;
-	net->plpmtud_search_algorithm = stcb->asoc.plpmtud_search_algorithm;
 	net->plpmtud_use_ptb = stcb->asoc.plpmtud_use_ptb;
 	net->plpmtud_max_probes = stcb->asoc.plpmtud_max_probes;
 	net->plpmtud_min_probe_rtx_time = stcb->asoc.plpmtud_min_probe_rtx_time;

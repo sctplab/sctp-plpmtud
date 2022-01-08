@@ -1981,7 +1981,7 @@ sctp_timeout_handler(void *t)
 		        ("timeout of type %d: inp = %p, stcb = %p, net = %p",
 		         type, inp, stcb, net));
 		SCTP_STAT_INCR(sctps_timopathmtu);
-		sctp_plpmtud_on_probe_timeout(&net->plpmtud);
+		sctp_plpmtud_on_probe_timeout(stcb, net);
 		did_output = false;
 		break;
 	case SCTP_TIMER_TYPE_SHUTDOWNACK:
@@ -2412,10 +2412,10 @@ sctp_timer_start(int t_type, struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 			        t_type, inp, stcb, net);
 			return;
 		}
-		KASSERT(net->plpmtud.timer_value > 0,
-			        ("sctp_timer_start PMTUD timer with net->plpmtud_enabled and net->plpmtud.timer_value==0"));
+		KASSERT(net->plpmtud_timer_value > 0,
+			        ("sctp_timer_start PMTUD timer with net->plpmtud_enabled and net->plpmtud_timer_value==0"));
 		tmr = &net->pmtu_timer;
-		to_ticks = sctp_msecs_to_ticks(net->plpmtud.timer_value);
+		to_ticks = sctp_msecs_to_ticks(net->plpmtud_timer_value);
 		break;
 	case SCTP_TIMER_TYPE_SHUTDOWNACK:
 		/* Here we use the RTO of the destination. */

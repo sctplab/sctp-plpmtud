@@ -332,7 +332,7 @@ sctp_notify(struct sctp_inpcb *inp,
 		/* no need to unlock here, since the TCB is gone */
 	} else if (icmp_code == ICMP_UNREACH_NEEDFRAG) {
 		if (net->plpmtud_enabled) {
-			sctp_plpmtud_on_ptb_received(&net->plpmtud, next_mtu);
+			sctp_plpmtud_on_ptb_received(stcb, net, next_mtu);
 		}
 		SCTP_TCB_UNLOCK(stcb);
 	} else {

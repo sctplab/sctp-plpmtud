@@ -59,12 +59,12 @@ __FBSDID("$FreeBSD$");
  * Function prototypes
  */
 void sctp_plpmtud_init(struct sctp_tcb *, struct sctp_nets *);
-void sctp_plpmtud_start(struct sctp_plpmtud *);
-void sctp_plpmtud_delayed_start(struct sctp_plpmtud *);
-void sctp_plpmtud_on_probe_acked(struct sctp_plpmtud *, uint32_t);
-void sctp_plpmtud_on_probe_timeout(struct sctp_plpmtud *);
-void sctp_plpmtud_on_ptb_received(struct sctp_plpmtud *, uint32_t);
-void sctp_plpmtud_on_pmtu_invalid(struct sctp_plpmtud *, uint32_t);
+void sctp_plpmtud_start(struct sctp_tcb *, struct sctp_nets *);
+void sctp_plpmtud_delayed_start(struct sctp_tcb *, struct sctp_nets *);
+void sctp_plpmtud_on_probe_acked(struct sctp_tcb *, struct sctp_nets *, uint32_t);
+void sctp_plpmtud_on_probe_timeout(struct sctp_tcb *, struct sctp_nets *);
+void sctp_plpmtud_on_ptb_received(struct sctp_tcb *, struct sctp_nets *, uint32_t);
+void sctp_plpmtud_on_pmtu_invalid(struct sctp_tcb *, struct sctp_nets *, uint32_t);
 
 #endif				/* _KERNEL */
 #endif
