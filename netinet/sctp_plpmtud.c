@@ -177,7 +177,7 @@ sctp_plpmtud_base_on_probe_acked(struct sctp_tcb *stcb, struct sctp_nets *net, u
 		/* ignore ack */
 		return;
 	}
-	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_1);
+	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_1);
 	if (acked_probe_size < net->plpmtud_max_pmtu) {
 		net->plpmtud_min_pmtu = acked_probe_size;
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_SEARCH);
@@ -202,7 +202,7 @@ sctp_plpmtud_base_on_ptb_received(struct sctp_tcb *stcb, struct sctp_nets *net, 
 {
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: BASE PTB received reporting an MTU of %u\n", ptb_mtu);
 	if (net->plpmtud_min_pmtu <= ptb_mtu && ptb_mtu < net->plpmtud_base_pmtu) {
-		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_1);
+		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_2);
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_ERROR);
 	}
 }
@@ -225,7 +225,7 @@ static void
 sctp_plpmtud_error_on_probe_acked(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t acked_probe_size)
 {
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: ERROR %u acked\n", acked_probe_size);
-	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_1);
+	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_3);
 	sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_SEARCH);
 }
 
@@ -400,7 +400,7 @@ sctp_plpmtud_search_on_probe_acked(struct sctp_tcb *stcb, struct sctp_nets *net,
 		/* ignore ack */
 		return;
 	}
-	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_2);
+	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_4);
 	net->plpmtud_last_probe_acked = 1;
 	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size);
 	if (net->mtu >= net->plpmtud_max_pmtu) {
@@ -456,18 +456,18 @@ sctp_plpmtud_search_on_ptb_received(struct sctp_tcb *stcb, struct sctp_nets *net
 	ptb_mtu = (ptb_mtu >> 2) << 2;
 	if (ptb_mtu < net->mtu) {
 		/* reported MTU is smaller than a previously successful probed size. Go back to BASE. */
-		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_3);
+		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_5);
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_BASE);
 	} else if (ptb_mtu == net->mtu) {
 		/* reported MTU confirmed current PMTU. Transition to SEARCH_COMPLETE */
-		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_4);
+		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_6);
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_SEARCHCOMPLETE);
 	} else if (!sctp_plpmtud_search_exists_larger_probe(&(net->plpmtud_probes), ptb_mtu)) {
 		/* no probe sent that would trigger this PTB, ignore. */
 	} else {
 		/* PMTU < PTB_MTU < MAX_PMTU */
 		/* use reported MTU for a new probe */
-		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_5);
+		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_7);
 		net->plpmtud_last_probe_acked = 0;
 		net->plpmtud_max_pmtu = ptb_mtu;
 		sctp_plpmtud_search_remove_probes(&(net->plpmtud_probes), ptb_mtu, 0, 0, 1);
@@ -482,7 +482,7 @@ sctp_plpmtud_search_on_pmtu_invalid(struct sctp_tcb *stcb, struct sctp_nets *net
 {
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: SEARCH PMTU reported invalid with largestAckedSinceLoss=%u\n", largest_acked_since_loss);
 	/* return to BASE */
-	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_6);
+	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_8);
 	sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_BASE);
 }
 
@@ -526,7 +526,7 @@ sctp_plpmtud_searchcomplete_on_probe_acked(struct sctp_tcb *stcb, struct sctp_ne
 	}
 
 	/* PMTU increased */
-	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_7);
+	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_9);
 	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size);
 	if (net->mtu < net->plpmtud_max_pmtu) {
 		net->plpmtud_min_pmtu = acked_probe_size;
@@ -567,12 +567,12 @@ sctp_plpmtud_searchcomplete_on_ptb_received(struct sctp_tcb *stcb, struct sctp_n
 	ptb_mtu = (ptb_mtu >> 2) << 2;
 	if (ptb_mtu < net->mtu) {
 		/* reported MTU is smaller than the current PMTU. Go back to BASE. */
-		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_8);
+		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_10);
 		net->plpmtud_max_pmtu = ptb_mtu;
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_BASE);
 	} else if (ptb_mtu == net->mtu) {
 		/* reported MTU confirmed the current PMTU. Reschedule RAISE_TIMER */
-		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTPUTIL + SCTP_LOC_9);
+		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_11);
 		net->plpmtud_probed_size = 0;
 		net->plpmtud_timer_value = net->plpmtud_raise_time;
 		sctp_timer_start(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net);
