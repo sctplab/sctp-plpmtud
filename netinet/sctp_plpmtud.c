@@ -764,7 +764,7 @@ sctp_plpmtud_on_pmtu_invalid(struct sctp_tcb *stcb, struct sctp_nets *net, uint3
 	}
 }
 
-static void
+void
 sctp_plpmtud_end(struct sctp_tcb *stcb, struct sctp_nets *net)
 {
 	switch (net->plpmtud_state) {
