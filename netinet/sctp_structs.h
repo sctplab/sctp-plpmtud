@@ -297,30 +297,6 @@ struct sctp_plpmtud_probe {
 	TAILQ_ENTRY(sctp_plpmtud_probe) next;
 };
 
-struct sctp_plpmtud {
-	struct sctp_tcb *stcb;
-	struct sctp_nets *net;
-	uint32_t timer_value;
-
-	uint32_t min_pmtu;
-	uint32_t max_pmtu;
-	uint32_t initial_min_pmtu;
-	uint32_t initial_max_pmtu;
-	uint32_t base_pmtu;
-	uint32_t overhead;
-	uint32_t probed_size;
-	uint16_t probe_count; /* used in BASE and SEARCH_COMPLETE */
-	struct sctp_plpmtud_probe_head probes; /* used in SEARCH */
-	uint8_t last_probe_acked; /* used in SEARCH */
-
-	/* used for candidate sequence in SEARCH */
-	uint32_t smallest_expired;
-	uint32_t smallest_failed;
-	uint32_t (*get_next_candidate)(struct sctp_plpmtud *);
-
-	uint8_t state;
-};
-
 struct sctp_nets {
 	TAILQ_ENTRY(sctp_nets) sctp_next;	/* next link */
 
@@ -462,15 +438,29 @@ struct sctp_nets {
 	uint8_t flowtype;
 #endif
 
+	/* PLPMTUD sysctl parameters */
 	uint8_t plpmtud_enabled;
-	uint32_t plpmtud_ipv4_min_mtu;
-	uint32_t plpmtud_ipv6_min_mtu;
-	uint8_t plpmtud_search_algorithm;
 	uint8_t plpmtud_use_ptb;
 	uint16_t plpmtud_max_probes;
 	uint32_t plpmtud_min_probe_rtx_time;
 	uint32_t plpmtud_raise_time;
-	struct sctp_plpmtud plpmtud;
+	/* PLPMTUD variables */
+	uint8_t plpmtud_state;
+	uint32_t plpmtud_timer_value;
+	uint32_t plpmtud_min_pmtu;
+	uint32_t plpmtud_max_pmtu;
+	uint32_t plpmtud_initial_min_pmtu;
+	uint32_t plpmtud_initial_max_pmtu;
+	uint32_t plpmtud_base_pmtu;
+	uint32_t plpmtud_overhead;
+	uint32_t plpmtud_probed_size;
+	uint16_t plpmtud_probe_count; /* used in BASE and SEARCH_COMPLETE */
+	struct sctp_plpmtud_probe_head plpmtud_probes; /* used in SEARCH */
+	uint8_t plpmtud_last_probe_acked; /* used in SEARCH */
+	/* used for candidate sequence in SEARCH */
+	uint32_t (*plpmtud_get_next_candidate)(struct sctp_tcb *, struct sctp_nets *);
+	uint32_t plpmtud_smallest_expired;
+	uint32_t plpmtud_smallest_failed;
 };
 
 struct sctp_data_chunkrec {
@@ -1275,15 +1265,6 @@ struct sctp_association {
 	uint8_t pktdrop_supported;
 	uint8_t idata_supported;
 
-	uint8_t plpmtud_enabled;
-	uint32_t plpmtud_ipv4_min_mtu;
-	uint32_t plpmtud_ipv6_min_mtu;
-	uint8_t plpmtud_search_algorithm;
-	uint8_t plpmtud_use_ptb;
-	uint16_t plpmtud_max_probes;
-	uint32_t plpmtud_min_probe_rtx_time;
-	uint32_t plpmtud_raise_time;
-
 	/* Did the peer make the stream config (add out) request */
 	uint8_t peer_req_out;
 
@@ -1337,6 +1318,16 @@ struct sctp_association {
 	struct timeval discontinuity_time;
 	uint64_t abandoned_unsent[SCTP_PR_SCTP_MAX + 1];
 	uint64_t abandoned_sent[SCTP_PR_SCTP_MAX + 1];
+
+	/* PLPMTUD sysctl parameters */
+	uint8_t plpmtud_enabled;
+	uint32_t plpmtud_ipv4_min_mtu;
+	uint32_t plpmtud_ipv6_min_mtu;
+	uint8_t plpmtud_search_algorithm;
+	uint8_t plpmtud_use_ptb;
+	uint16_t plpmtud_max_probes;
+	uint32_t plpmtud_min_probe_rtx_time;
+	uint32_t plpmtud_raise_time;
 };
 
 #endif

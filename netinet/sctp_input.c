@@ -651,7 +651,7 @@ sctp_handle_heartbeat_ack(struct sctp_heartbeat_chunk *cp,
 		 */
 		r_net->dest_state &= ~SCTP_ADDR_UNCONFIRMED;
 		if (net->plpmtud_enabled) {
-			sctp_plpmtud_start(&net->plpmtud);
+			sctp_plpmtud_start(stcb, net);
 		}
 		if (r_net->dest_state & SCTP_ADDR_REQ_PRIMARY) {
 			stcb->asoc.primary_destination = r_net;
@@ -737,7 +737,7 @@ sctp_handle_heartbeat_ack(struct sctp_heartbeat_chunk *cp,
 	}
 
 	if (cp->heartbeat.hb_info.probe_mtu > 0) {
-		sctp_plpmtud_on_probe_acked(&r_net->plpmtud, cp->heartbeat.hb_info.probe_mtu);
+		sctp_plpmtud_on_probe_acked(stcb, r_net, cp->heartbeat.hb_info.probe_mtu);
 	}
 }
 
@@ -904,10 +904,10 @@ sctp_start_net_timers(struct sctp_tcb *stcb)
 			}
 		} else if (net->plpmtud_enabled) {
 			if (cnt_hb_sent < SCTP_BASE_SYSCTL(sctp_hb_maxburst)) {
-				sctp_plpmtud_start(&net->plpmtud);
+				sctp_plpmtud_start(stcb, net);
 				cnt_hb_sent++;
 			} else {
-				sctp_plpmtud_delayed_start(&net->plpmtud);
+				sctp_plpmtud_delayed_start(stcb, net);
 			}
 		}
 	}

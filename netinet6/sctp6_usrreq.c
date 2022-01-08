@@ -361,7 +361,7 @@ sctp6_notify(struct sctp_inpcb *inp,
 		break;
 	case ICMP6_PACKET_TOO_BIG:
 		if (net->plpmtud_enabled) {
-			sctp_plpmtud_on_ptb_received(&net->plpmtud, next_mtu);
+			sctp_plpmtud_on_ptb_received(stcb, net, next_mtu);
 		}
 		SCTP_TCB_UNLOCK(stcb);
 		break;
