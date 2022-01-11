@@ -6276,7 +6276,7 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 						if (net->plpmtud_enabled) {
 							sctp_plpmtud_end(stcb, net);
 							if (SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
-								sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_USRREQ + SCTP_LOC_11);
+								sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_USRREQ + SCTP_LOC_16);
 							}
 							net->plpmtud_enabled = false;
 						}
