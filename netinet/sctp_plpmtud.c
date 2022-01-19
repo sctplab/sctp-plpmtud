@@ -123,6 +123,29 @@ sctp_plpmtud_set_pmtu(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t pmt
 }
 
 static void
+sctp_plpmtud_cache_pmtu(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t pmtu, uint8_t increase)
+{
+	if (net->ro._s_addr != NULL) {
+#if defined(__FreeBSD__) && !defined(__Userspace__)
+		if (pmtu < sctp_hc_get_mtu(&net->ro._l_addr, stcb->sctp_ep->fibnum) || increase) {
+			sctp_hc_set_mtu(&net->ro._l_addr, stcb->sctp_ep->fibnum, pmtu);
+		}
+		/* SCTP_SET_MTU_OF_ROUTE */
+		if (net->ro.ro_nh != NULL) {
+			if (pmtu < SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, net->ro.ro_nh) || increase) {
+				SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: set pmtu %u for route\n", pmtu);
+				net->ro.ro_nh->nh_mtu = pmtu;
+			}
+		}
+#else
+		if (pmtu < SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, net->ro.ro_nh) || increase) {
+			SCTP_SET_MTU_OF_ROUTE(&net->ro._l_addr.sa, net->ro.ro_rt, pmtu);
+		}
+#endif
+	}
+}
+
+static void
 sctp_plpmtud_disabled_start(struct sctp_tcb *stcb, struct sctp_nets *net) {
 	uint32_t rmtu, hcmtu;
 
@@ -501,13 +524,7 @@ sctp_plpmtud_searchcomplete_start(struct sctp_tcb *stcb, struct sctp_nets *net)
 	net->plpmtud_max_pmtu = net->plpmtud_initial_max_pmtu;
 
 	/* write discovered PMTU into the host cache (FreeBSD) or set it for the route */
-	if (net->ro._s_addr != NULL) {
-#if defined(__FreeBSD__) && !defined(__Userspace__)
-		sctp_hc_set_mtu(&net->ro._l_addr, stcb->sctp_ep->fibnum, net->mtu);
-#else
-		SCTP_SET_MTU_OF_ROUTE(&net->ro._l_addr.sa, net->ro.ro_rt, net->mtu);
-#endif
-	}
+	sctp_plpmtud_cache_pmtu(stcb, net, net->mtu, true);
 
 	if (net->mtu < net->plpmtud_max_pmtu) {
 		net->plpmtud_probed_size = 0;
@@ -569,6 +586,7 @@ sctp_plpmtud_searchcomplete_on_ptb_received(struct sctp_tcb *stcb, struct sctp_n
 		/* reported MTU is smaller than the current PMTU. Go back to BASE. */
 		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_10);
 		net->plpmtud_max_pmtu = ptb_mtu;
+		sctp_plpmtud_cache_pmtu(stcb, net, ptb_mtu, false);
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_BASE);
 	} else if (ptb_mtu == net->mtu) {
 		/* reported MTU confirmed the current PMTU. Reschedule RAISE_TIMER */
@@ -758,9 +776,9 @@ sctp_plpmtud_on_pmtu_invalid(struct sctp_tcb *stcb, struct sctp_nets *net, uint3
 	largest_acked_since_loss = largest_sctp_packet_acked_since_loss + net->plpmtud_overhead;
 	switch (net->plpmtud_state) {
 	case SCTP_PLPMTUD_STATE_SEARCH:
-		return sctp_plpmtud_search_on_pmtu_invalid(stcb, net, largest_sctp_packet_acked_since_loss);
+		return sctp_plpmtud_search_on_pmtu_invalid(stcb, net, largest_acked_since_loss);
 	case SCTP_PLPMTUD_STATE_SEARCHCOMPLETE:
-		return sctp_plpmtud_searchcomplete_on_pmtu_invalid(stcb, net, largest_sctp_packet_acked_since_loss);
+		return sctp_plpmtud_searchcomplete_on_pmtu_invalid(stcb, net, largest_acked_since_loss);
 	}
 }
 
