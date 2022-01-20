@@ -348,6 +348,11 @@ typedef struct callout sctp_os_timer_t;
 /*************************/
 #define SCTP_GATHER_MTU_FROM_IFN_INFO(ifn, ifn_index) ((ifn != NULL) ? ((struct ifnet *)ifn)->if_mtu : 0)
 #define SCTP_GATHER_MTU_FROM_ROUTE(sctp_ifa, sa, nh) ((uint32_t)((nh != NULL) ? nh->nh_mtu : 0))
+#define SCTP_SET_MTU_OF_ROUTE(sa, nh, mtu) \
+	do { \
+		if (nh != NULL) \
+			nh->nh_mtu = mtu; \
+	} while (0)
 
 /*************************/
 /* These are for logging */

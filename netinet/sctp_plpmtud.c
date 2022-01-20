@@ -130,15 +130,11 @@ sctp_plpmtud_cache_pmtu(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t p
 		if (pmtu < sctp_hc_get_mtu(&net->ro._l_addr, stcb->sctp_ep->fibnum) || increase) {
 			sctp_hc_set_mtu(&net->ro._l_addr, stcb->sctp_ep->fibnum, pmtu);
 		}
-		/* SCTP_SET_MTU_OF_ROUTE */
-		if (net->ro.ro_nh != NULL) {
-			if (pmtu < SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, net->ro.ro_nh) || increase) {
-				SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: set pmtu %u for route\n", pmtu);
-				net->ro.ro_nh->nh_mtu = pmtu;
-			}
+		if (pmtu < SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, net->ro.ro_nh) || increase) {
+			SCTP_SET_MTU_OF_ROUTE(&net->ro._l_addr.sa, net->ro.ro_nh, pmtu);
 		}
 #else
-		if (pmtu < SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, net->ro.ro_nh) || increase) {
+		if (pmtu < SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, net->ro.ro_rt) || increase) {
 			SCTP_SET_MTU_OF_ROUTE(&net->ro._l_addr.sa, net->ro.ro_rt, pmtu);
 		}
 #endif
