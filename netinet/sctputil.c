@@ -8574,6 +8574,32 @@ sctp_hc_get_mtu(union sctp_sockstore *addr, uint16_t fibnum)
 #endif
 
 void
+sctp_route_set_mtu(struct sctp_nets *net, uint32_t mtu)
+{
+	if (net->ro._s_addr == NULL) {
+		return;
+	}
+#if defined(__FreeBSD__) && !defined(__Userspace__)
+	SCTP_SET_MTU_OF_ROUTE(&net->ro._l_addr.sa, net->ro.ro_nh, mtu);
+#else
+	SCTP_SET_MTU_OF_ROUTE(&net->ro._l_addr.sa, net->ro.ro_rt, mtu);
+#endif
+}
+
+uint32_t
+sctp_route_get_mtu(struct sctp_nets *net)
+{
+	if (net->ro._s_addr == NULL) {
+		return 0;
+	}
+#if defined(__FreeBSD__) && !defined(__Userspace__)
+	return SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, net->ro.ro_nh);
+#else
+	return SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, net->ro.ro_rt);
+#endif
+}
+
+void
 sctp_set_state(struct sctp_tcb *stcb, int new_state)
 {
 #if defined(KDTRACE_HOOKS)
