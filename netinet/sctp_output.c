@@ -56,6 +56,7 @@ __FBSDID("$FreeBSD$");
 #include <netinet/sctp_bsd_addr.h>
 #include <netinet/sctp_input.h>
 #include <netinet/sctp_crc32.h>
+#include <netinet/sctp_plpmtud.h>
 #if defined(__FreeBSD__) && !defined(__Userspace__)
 #include <netinet/sctp_kdtrace.h>
 #endif
@@ -4468,23 +4469,16 @@ int so_locked)
 #else
 			if ((ro->ro_rt != NULL) && (net->ro._s_addr) &&
 #endif
-			    ((net->dest_state & SCTP_ADDR_NO_PMTUD) == 0)) {
+			    (net->plpmtud_enabled)) {
 				uint32_t mtu;
 
-#if defined(__FreeBSD__) && !defined(__Userspace__)
-				mtu = SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, ro->ro_nh);
-#else
-				mtu = SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, ro->ro_rt);
-#endif
+				mtu = sctp_route_get_mtu(net);
 				if (mtu > 0) {
 					if (net->port) {
 						mtu -= sizeof(struct udphdr);
 					}
 					if (mtu < net->mtu) {
-						net->mtu = mtu;
-						if ((stcb != NULL) && (stcb->asoc.smallest_mtu > mtu)) {
-							sctp_pathmtu_adjustment(stcb, mtu, true);
-						}
+						sctp_plpmtud_on_pmtu_invalid(stcb, net, 0);
 					}
 				}
 #if defined(__FreeBSD__) && !defined(__Userspace__)
@@ -4958,23 +4952,16 @@ int so_locked)
 #else
 			if ((ro->ro_rt != NULL) && (net->ro._s_addr) &&
 #endif
-			    ((net->dest_state & SCTP_ADDR_NO_PMTUD) == 0)) {
+			    (net->plpmtud_enabled)) {
 				uint32_t mtu;
 
-#if defined(__FreeBSD__) && !defined(__Userspace__)
-				mtu = SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, ro->ro_nh);
-#else
-				mtu = SCTP_GATHER_MTU_FROM_ROUTE(net->ro._s_addr, &net->ro._l_addr.sa, ro->ro_rt);
-#endif
+				mtu = sctp_route_get_mtu(net);
 				if (mtu > 0) {
 					if (net->port) {
 						mtu -= sizeof(struct udphdr);
 					}
 					if (mtu < net->mtu) {
-						net->mtu = mtu;
-						if ((stcb != NULL) && (stcb->asoc.smallest_mtu > mtu)) {
-							sctp_pathmtu_adjustment(stcb, mtu, false);
-						}
+						sctp_plpmtud_on_pmtu_invalid(stcb, net, 0);
 					}
 				}
 			}
