@@ -450,7 +450,6 @@ struct sctp_nets {
 	uint32_t plpmtud_min_pmtu;
 	uint32_t plpmtud_max_pmtu;
 	uint32_t plpmtud_base_pmtu;
-	uint32_t plpmtud_overhead;
 	uint32_t plpmtud_probed_size;
 	uint16_t plpmtud_probe_count; /* used in BASE and SEARCH_COMPLETE */
 	struct sctp_plpmtud_probe_head plpmtud_probes; /* used in SEARCH */
