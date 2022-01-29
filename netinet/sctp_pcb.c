@@ -4546,7 +4546,6 @@ sctp_add_remote_addr(struct sctp_tcb *stcb, struct sockaddr *newaddr,
 	} else {
 		net->dest_state &= ~SCTP_ADDR_NOHB;
 	}
-	net->dest_state |= SCTP_ADDR_NO_PMTUD;
 	net->plpmtud_enabled = stcb->asoc.plpmtud_enabled;
 	net->plpmtud_use_ptb = stcb->asoc.plpmtud_use_ptb;
 	net->plpmtud_max_probes = stcb->asoc.plpmtud_max_probes;
