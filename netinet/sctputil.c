@@ -2396,16 +2396,16 @@ sctp_timer_start(int t_type, struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	case SCTP_TIMER_TYPE_PATHMTURAISE:
 		if ((inp == NULL) || (stcb == NULL) || (net == NULL)) {
 #ifdef INVARIANTS
-			panic("sctp_timer_start of type %d: stcb = %p, net = %p",
-			      t_type, stcb, net);
+			panic("sctp_timer_start of type %d: inp=%p, stcb = %p, net = %p",
+			      t_type, inp, stcb, net);
 #else
 			return;
 #endif
 		}
 		if (!net->plpmtud_enabled) {
 			SCTPDBG(SCTP_DEBUG_TIMER2,
-			        "Timer type %d not started: stcb=%p, net=%p.\n",
-			        t_type, stcb, net);
+			        "Timer type %d not started: inp=%p, stcb=%p, net=%p.\n",
+			        t_type, inp, stcb, net);
 			return;
 		}
 		KASSERT(net->plpmtud_timer_value > 0,
