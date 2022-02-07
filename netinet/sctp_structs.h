@@ -455,7 +455,7 @@ struct sctp_nets {
 	struct sctp_plpmtud_probe_head plpmtud_probes; /* used in SEARCH */
 	uint8_t plpmtud_last_probe_acked; /* used in SEARCH */
 	/* used for candidate sequence in SEARCH */
-	uint32_t (*plpmtud_get_next_candidate)(struct sctp_tcb *, struct sctp_nets *, uint8_t);
+	uint32_t (*plpmtud_get_next_candidate)(struct sctp_tcb *, struct sctp_nets *, bool);
 	uint32_t plpmtud_smallest_expired;
 	uint32_t plpmtud_smallest_failed;
 };
