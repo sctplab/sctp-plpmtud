@@ -147,7 +147,7 @@ sctp_plpmtud_get_pmtu(struct sctp_nets *net)
 }
 
 static void
-sctp_plpmtud_set_pmtu(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t pmtu)
+sctp_plpmtud_set_pmtu(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t pmtu, bool resend)
 {
 	uint32_t smallest_net_mtu, old_pmtu;
 	struct sctp_nets *mnet;
@@ -163,7 +163,10 @@ sctp_plpmtud_set_pmtu(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t pmt
 	/* update smallest_mtu for the asoc */
 	if (pmtu < stcb->asoc.smallest_mtu) {
 		/* smallest_mtu reduced. */
-		sctp_pathmtu_adjustment(stcb, pmtu, false);
+		sctp_pathmtu_adjustment(stcb, pmtu, resend);
+		if (resend) {
+			sctp_chunk_output(stcb->sctp_ep, stcb, SCTP_OUTPUT_FROM_PLPMTUD, SCTP_SO_LOCKED);
+		}
 	} else if (old_pmtu == stcb->asoc.smallest_mtu && pmtu > old_pmtu) {
 		/* smallest_mtu might have been increased */
 		/* find the new smallest mtu and use it */
@@ -332,7 +335,7 @@ sctp_plpmtud_base_start(struct sctp_tcb *stcb, struct sctp_nets *net)
 	net->plpmtud_max_pmtu = sctp_plpmtud_find_smaller_max(stcb, net, net->plpmtud_min_pmtu, min(net->plpmtud_max_pmtu, upper_limit));
 	net->plpmtud_base_pmtu = sctp_plpmtud_get_base(stcb, net, net->plpmtud_min_pmtu, net->plpmtud_max_pmtu);
 
-	sctp_plpmtud_set_pmtu(stcb, net, net->plpmtud_base_pmtu);
+	sctp_plpmtud_set_pmtu(stcb, net, net->plpmtud_base_pmtu, false);
 	net->plpmtud_probe_count = 0;
 	sctp_plpmtud_send_probe(stcb, net, net->plpmtud_base_pmtu, false);
 }
@@ -346,7 +349,7 @@ sctp_plpmtud_base_on_probe_acked(struct sctp_tcb *stcb, struct sctp_nets *net, u
 		return;
 	}
 	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_1);
-	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size);
+	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size, false);
 	if (acked_probe_size < net->plpmtud_max_pmtu) {
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_SEARCH);
 	} else {
@@ -383,7 +386,7 @@ sctp_plpmtud_error_start(struct sctp_tcb *stcb, struct sctp_nets *net)
 
 	net->plpmtud_min_pmtu = sctp_plpmtud_get_lower_limit(stcb, net, sctp_plpmtud_get_upper_limit(net));
 
-	sctp_plpmtud_set_pmtu(stcb, net, net->plpmtud_min_pmtu);
+	sctp_plpmtud_set_pmtu(stcb, net, net->plpmtud_min_pmtu, false);
 	if (net->plpmtud_probed_size > net->plpmtud_min_pmtu) {
 		net->plpmtud_probe_count = 0;
 		sctp_plpmtud_send_probe(stcb, net, net->plpmtud_min_pmtu, false);
@@ -397,7 +400,7 @@ sctp_plpmtud_error_on_probe_acked(struct sctp_tcb *stcb, struct sctp_nets *net, 
 {
 	SCTPDBG(SCTP_DEBUG_UTIL1, "PLPMTUD: ERROR %u acked\n", acked_probe_size);
 	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_3);
-	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size);
+	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size, false);
 	if (acked_probe_size < net->plpmtud_max_pmtu) {
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_SEARCH);
 	} else {
@@ -582,7 +585,7 @@ sctp_plpmtud_search_on_probe_acked(struct sctp_tcb *stcb, struct sctp_nets *net,
 	}
 	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_4);
 	net->plpmtud_last_probe_acked = true;
-	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size);
+	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size, false);
 	if (sctp_plpmtud_get_pmtu(net) >= net->plpmtud_max_pmtu) {
 		/* max PMTU acked, transistion to SEARCH_COMPLETE */
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_SEARCHCOMPLETE);
@@ -699,7 +702,7 @@ sctp_plpmtud_searchcomplete_on_probe_acked(struct sctp_tcb *stcb, struct sctp_ne
 
 	/* PMTU increased */
 	sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_9);
-	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size);
+	sctp_plpmtud_set_pmtu(stcb, net, acked_probe_size, false);
 
 	net->plpmtud_max_pmtu = sctp_plpmtud_get_upper_limit(net);
 	if (sctp_plpmtud_get_pmtu(net) < net->plpmtud_max_pmtu) {
@@ -752,6 +755,7 @@ sctp_plpmtud_searchcomplete_on_ptb_received(struct sctp_tcb *stcb, struct sctp_n
 		sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_PLPMTUD + SCTP_LOC_10);
 		sctp_plpmtud_cache_pmtu(stcb, net, ptb_mtu, false);
 		net->plpmtud_max_pmtu = ptb_mtu;
+		sctp_plpmtud_set_pmtu(stcb, net, ptb_mtu, true);
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_BASE);
 	} else if (ptb_mtu == sctp_plpmtud_get_pmtu(net)) {
 		/* reported MTU confirmed the current PMTU. Reschedule RAISE_TIMER */
@@ -778,7 +782,7 @@ sctp_plpmtud_searchcomplete_on_pmtu_invalid(struct sctp_tcb *stcb, struct sctp_n
 	lower_limit = sctp_plpmtud_get_lower_limit(stcb, net, upper_limit);
 	net->plpmtud_max_pmtu = sctp_plpmtud_find_smaller_max(stcb, net, lower_limit, min(sctp_plpmtud_get_pmtu(net), upper_limit));
 	if (largest_acked_since_loss >= sctp_plpmtud_get_base(stcb, net, lower_limit, net->plpmtud_max_pmtu)) {
-		sctp_plpmtud_set_pmtu(stcb, net, largest_acked_since_loss);
+		sctp_plpmtud_set_pmtu(stcb, net, largest_acked_since_loss, false);
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_SEARCH);
 	} else {
 		sctp_plpmtud_newstate(stcb, net, SCTP_PLPMTUD_STATE_BASE);

@@ -381,6 +381,7 @@ extern void getwintimeofday(struct timeval *tv);
 #define SCTP_OUTPUT_FROM_DRAIN          15
 #define SCTP_OUTPUT_FROM_CLOSING        16
 #define SCTP_OUTPUT_FROM_SOCKOPT        17
+#define SCTP_OUTPUT_FROM_PLPMTUD        18
 
 /* SCTP chunk types are moved sctp.h for application (NAT, FW) use */
 
