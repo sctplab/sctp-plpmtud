@@ -271,7 +271,7 @@ sctp_plpmtud_get_upper_limit(struct sctp_nets *net)
 	upper_limit = (SCTP_PLPMTUD_MAX_IP_SIZE >> 2) << 2;
 	imtu = 0;
 	if (net->ro._s_addr != NULL && net->ro._s_addr->ifn_p != NULL) {
-		imtu = SCTP_GATHER_MTU_FROM_INTFC(net->ro._s_addr->ifn_p);
+		imtu = SCTP_GATHER_MTU_FROM_IFN_INFO(net->ro._s_addr->ifn_p->ifn_p, net->ro._s_addr->ifn_p->ifn_index);
 	}
 	if (0 < imtu && imtu < upper_limit) {
 		upper_limit = (imtu >> 2) << 2;
