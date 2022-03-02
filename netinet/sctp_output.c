@@ -15196,7 +15196,7 @@ sctp_make_pad(struct sctp_tcb *stcb, struct sctp_nets *net, uint16_t pad_size)
 }
 
 void
-sctp_send_plpmtud_probe(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t probe_size, uint32_t overhead)
+sctp_send_plpmtud_probe(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t probe_size, uint32_t overhead, uint32_t probe_id)
 {
 	int error;
 	uint8_t chunk_to_auth;
@@ -15245,7 +15245,7 @@ sctp_send_plpmtud_probe(struct sctp_tcb *stcb, struct sctp_nets *net, uint32_t p
 		}
 		return;
 	}
-	hb->heartbeat.hb_info.probe_mtu = probe_size;
+	hb->heartbeat.hb_info.probe_id = probe_id;
 	if (m_auth != NULL) {
 		SCTP_BUF_NEXT(m_auth) = m_hb;
 	}

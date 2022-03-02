@@ -4716,9 +4716,6 @@ sctp_add_remote_addr(struct sctp_tcb *stcb, struct sockaddr *newaddr,
 	if (stcb->asoc.smallest_mtu > net->mtu) {
 		sctp_pathmtu_adjustment(stcb, net->mtu, true);
 	}
-	if (net->plpmtud_enabled) {
-		sctp_plpmtud_init(stcb, net);
-	}
 #ifdef INET6
 #ifdef SCTP_EMBEDDED_V6_SCOPE
 	if (newaddr->sa_family == AF_INET6) {

@@ -736,8 +736,8 @@ sctp_handle_heartbeat_ack(struct sctp_heartbeat_chunk *cp,
 		}
 	}
 
-	if (r_net->plpmtud_enabled && cp->heartbeat.hb_info.probe_mtu > 0) {
-		sctp_plpmtud_on_probe_acked(stcb, r_net, cp->heartbeat.hb_info.probe_mtu);
+	if (r_net->plpmtud_enabled && cp->heartbeat.hb_info.probe_id > 0) {
+		sctp_plpmtud_on_probe_acked(stcb, r_net, cp->heartbeat.hb_info.probe_id);
 	}
 }
 

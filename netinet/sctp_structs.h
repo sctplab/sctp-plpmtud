@@ -292,6 +292,7 @@ struct rtcc_cc {
 
 TAILQ_HEAD(sctp_plpmtud_probe_head, sctp_plpmtud_probe);
 struct sctp_plpmtud_probe {
+	uint32_t id;
 	uint32_t size;
 	uint16_t count;
 	TAILQ_ENTRY(sctp_plpmtud_probe) next;
@@ -450,9 +451,8 @@ struct sctp_nets {
 	uint32_t plpmtud_min_pmtu;
 	uint32_t plpmtud_max_pmtu;
 	uint32_t plpmtud_base_pmtu;
-	uint32_t plpmtud_probed_size;
-	uint16_t plpmtud_probe_count; /* used in BASE and SEARCH_COMPLETE */
-	struct sctp_plpmtud_probe_head plpmtud_probes; /* used in SEARCH */
+	struct sctp_plpmtud_probe *plpmtud_last_probe;
+	struct sctp_plpmtud_probe_head plpmtud_probes;
 	uint8_t plpmtud_last_probe_acked; /* used in SEARCH */
 	/* used for candidate sequence in SEARCH */
 	uint32_t (*plpmtud_get_next_candidate)(struct sctp_tcb *, struct sctp_nets *, bool);

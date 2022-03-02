@@ -102,7 +102,7 @@ struct sctp_heartbeat_info_param {
 	uint32_t time_value_2;
 	uint32_t random_value1;
 	uint32_t random_value2;
-	uint32_t probe_mtu;
+	uint32_t probe_id;
 	uint8_t addr_family;
 	uint8_t addr_len;
 	/* make sure that this structure is 4 byte aligned */

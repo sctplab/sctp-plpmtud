@@ -6122,10 +6122,7 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 				}
 				if (paddrp->spp_flags & SPP_PMTUD_DISABLE) {
 					if (net->plpmtud_enabled) {
-						sctp_plpmtud_end(stcb, net);
-						if (SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
-							sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_USRREQ + SCTP_LOC_11);
-						}
+						sctp_plpmtud_stop(stcb, net);
 						net->plpmtud_enabled = false;
 					}
 					if (paddrp->spp_pathmtu > 0) {
@@ -6157,7 +6154,6 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 				if (paddrp->spp_flags & SPP_PMTUD_ENABLE) {
 					if (!net->plpmtud_enabled) {
 						net->plpmtud_enabled = true;
-						sctp_plpmtud_init(stcb, net);
 						sctp_plpmtud_start(stcb, net);
 					}
 				}
@@ -6274,10 +6270,7 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 				if (paddrp->spp_flags & SPP_PMTUD_DISABLE) {
 					TAILQ_FOREACH(net, &stcb->asoc.nets, sctp_next) {
 						if (net->plpmtud_enabled) {
-							sctp_plpmtud_end(stcb, net);
-							if (SCTP_OS_TIMER_PENDING(&net->pmtu_timer.timer)) {
-								sctp_timer_stop(SCTP_TIMER_TYPE_PATHMTURAISE, stcb->sctp_ep, stcb, net, SCTP_FROM_SCTP_USRREQ + SCTP_LOC_16);
-							}
+							sctp_plpmtud_stop(stcb, net);
 							net->plpmtud_enabled = false;
 						}
 						if (paddrp->spp_pathmtu > 0) {
@@ -6316,7 +6309,6 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 					TAILQ_FOREACH(net, &stcb->asoc.nets, sctp_next) {
 						if (!net->plpmtud_enabled) {
 							net->plpmtud_enabled = true;
-							sctp_plpmtud_init(stcb, net);
 							sctp_plpmtud_start(stcb, net);
 						}
 					}
